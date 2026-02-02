@@ -1,0 +1,1 @@
+{"version":3,"file":"collectibleTemplate.d.ts","sourceRoot":"","sources":["../../../../src/generator/templates/collectibleTemplate.ts"],"names":[],"mappings":"AACA,OAAO,KAAK,EAAE,cAAc,EAAE,eAAe,EAAE,MAAM,oBAAoB,CAAC;AAE1E,0CAA0C;AAC1C,wBAAgB,yBAAyB,CACvC,YAAY,EAAE,SAAS,cAAc,EAAE,EACvC,UAAU,EAAE,SAAS,eAAe,EAAE,GACrC,MAAM,CA2BR;AAED,4CAA4C;AAC5C,wBAAgB,4BAA4B,IAAI,MAAM,CAmCrD"}

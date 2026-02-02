@@ -18,6 +18,7 @@
     "src"
   ],
   "scripts": {
+    "prebuild": "tsx scripts/generate-grammar-source.ts",
     "build": "tsx build.ts",
     "build:editor": "vite build --config vite.editor.config.ts",
     "build:playground": "vite build --config vite.playground.config.ts",
