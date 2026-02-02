@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phaser Platformer DSL — Interactive Playground</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --border: #1a3a6a;
+    --text: #e0e0e0;
+    --text-muted: #8899aa;
+    --accent: #e94560;
+    --accent2: #533483;
+    --green: #10b981;
+    --blue: #3b82f6;
+    --orange: #f97316;
+    --yellow: #eab308;
+    --pink: #ec4899;
+    --cyan: #06b6d4;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    --sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Header */
+  .header {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .preset-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .preset-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+
+  .preset-btn:hover { border-color: var(--accent); color: var(--text); }
+  .preset-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 6px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .section {
+    margin-bottom: 16px;
+  }
+
+  .section-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+
+  .section-header::after {
+    content: '\25BC';
+    font-size: 8px;
+    transition: transform 0.2s;
+  }
+
+  .section-header.collapsed::after { transform: rotate(-90deg); }
+  .section-body.collapsed { display: none; }
+
+  .control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+
+  .control-row label {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .control-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+
+  .control-row .value {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  .control-row input[type="color"] {
+    width: 28px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .control-row select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--sans);
+    flex: 1;
+  }
+
+  .control-row input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--mono);
+    width: 60px;
+    text-align: right;
+  }
+
+  .control-row input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--sans);
+    flex: 1;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .toggle {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .toggle input { display: none; }
+
+  .toggle .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle .slider::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+  .toggle input:checked + .slider::before { transform: translateX(14px); background: #fff; }
+
+  .toggle-row label {
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  /* Add/Remove buttons for entities */
+  .entity-list {
+    margin-bottom: 8px;
+  }
+
+  .entity-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .entity-item .name {
+    font-family: var(--mono);
+    color: var(--cyan);
+    font-weight: 500;
+  }
+
+  .entity-item .info {
+    color: var(--text-muted);
+    flex: 1;
+    text-align: right;
+  }
+
+  .entity-item .remove-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .add-btn {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    width: 100%;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover { border-color: var(--green); color: var(--green); }
+
+  /* Main area */
+  .main {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: hidden;
+  }
+
+  /* Preview canvas */
+  .preview-area {
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .preview-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .preview-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .overlay-btn {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text);
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+
+  .overlay-btn:hover { background: rgba(255,255,255,0.15); }
+  .overlay-btn.active { background: var(--accent); border-color: var(--accent); }
+
+  .preview-info {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: rgba(255,255,255,0.4);
+    pointer-events: none;
+  }
+
+  /* Output area */
+  .output-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .output-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  .output-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+
+  .output-tab:hover { color: var(--text); }
+  .output-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .output-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 14px;
+    position: relative;
+  }
+
+  .output-content::-webkit-scrollbar { width: 6px; }
+  .output-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .output-content pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  .output-content .prompt-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--sans);
+    transition: all 0.15s;
+    z-index: 2;
+  }
+
+  .copy-btn:hover { border-color: var(--green); color: var(--green); }
+  .copy-btn.copied { background: var(--green); color: #fff; border-color: var(--green); }
+
+  /* Syntax highlighting in DSL output */
+  .dsl-keyword { color: var(--accent); font-weight: 600; }
+  .dsl-string { color: var(--green); }
+  .dsl-number { color: var(--orange); }
+  .dsl-comment { color: var(--text-muted); font-style: italic; }
+  .dsl-ident { color: var(--cyan); }
+  .dsl-prop { color: var(--yellow); }
+
+  /* Modal for adding entities */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    width: 340px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal h3 {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .modal .form-row {
+    margin-bottom: 8px;
+  }
+
+  .modal .form-row label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+
+  .modal .form-row input,
+  .modal .form-row select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--sans);
+  }
+
+  .modal .form-row input[type="number"] {
+    font-family: var(--mono);
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .modal-actions button {
+    padding: 5px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: var(--sans);
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  .btn-cancel { background: var(--bg); color: var(--text-muted); }
+  .btn-cancel:hover { color: var(--text); }
+  .btn-confirm { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-confirm:hover { opacity: 0.9; }
+
+  /* Drag hint */
+  .drag-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    pointer-events: none;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .drag-hint.hidden { display: none; }
+
+  /* Platform placement grid dots */
+  .grid-toggle { margin-left: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>&#9670;</span> Phaser Platformer DSL Playground</h1>
+  <div class="preset-bar">
+    <button class="preset-btn active" onclick="loadPreset('simple')">Simple Platformer</button>
+    <button class="preset-btn" onclick="loadPreset('dungeon')">Dungeon Crawl</button>
+    <button class="preset-btn" onclick="loadPreset('sky')">Sky Chase</button>
+    <button class="preset-btn" onclick="loadPreset('arena')">Arena Survival</button>
+    <button class="preset-btn" onclick="loadPreset('minimal')">Minimal</button>
+  </div>
+</div>
+
+<div class="sidebar">
+  <!-- Game Config -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Game Config</div>
+    <div class="section-body">
+      <div class="control-row">
+        <label>Title</label>
+        <input type="text" id="gameTitle" value="My Platformer" oninput="state.title=this.value; updateAll()">
+      </div>
+      <div class="control-row">
+        <label>Width</label>
+        <input type="range" min="400" max="1200" step="50" value="800" oninput="state.config.width=+this.value; document.getElementById('widthVal').textContent=this.value; updateAll()">
+        <span class="value" id="widthVal">800</span>
+      </div>
+      <div class="control-row">
+        <label>Height</label>
+        <input type="range" min="300" max="800" step="50" value="600" oninput="state.config.height=+this.value; document.getElementById('heightVal').textContent=this.value; updateAll()">
+        <span class="value" id="heightVal">600</span>
+      </div>
+      <div class="control-row">
+        <label>Gravity</label>
+        <input type="range" min="0" max="1200" step="50" value="500" oninput="state.config.gravity=+this.value; document.getElementById('gravVal').textContent=this.value; updateAll()">
+        <span class="value" id="gravVal">500</span>
+      </div>
+      <div class="control-row">
+        <label>Background</label>
+        <input type="color" value="#87CEEB" oninput="state.config.background=this.value; updateAll()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Player -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Player</div>
+    <div class="section-body">
+      <div class="control-row">
+        <label>Speed</label>
+        <input type="range" min="50" max="500" step="10" value="200" oninput="state.player.speed=+this.value; document.getElementById('speedVal').textContent=this.value; updateAll()">
+        <span class="value" id="speedVal">200</span>
+      </div>
+      <div class="control-row">
+        <label>Jump Force</label>
+        <input type="range" min="100" max="800" step="10" value="420" oninput="state.player.jumpForce=+this.value; document.getElementById('jumpVal').textContent=this.value; updateAll()">
+        <span class="value" id="jumpVal">420</span>
+      </div>
+      <div class="control-row">
+        <label>Lives</label>
+        <input type="range" min="1" max="10" step="1" value="3" oninput="state.player.lives=+this.value; document.getElementById('livesVal').textContent=this.value; updateAll()">
+        <span class="value" id="livesVal">3</span>
+      </div>
+      <div class="control-row">
+        <label>Controls</label>
+        <select onchange="state.player.controls=this.value; updateAll()">
+          <option value="arrows">Arrows</option>
+          <option value="wasd">WASD</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enemies -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Enemies</div>
+    <div class="section-body">
+      <div class="entity-list" id="enemyList"></div>
+      <button class="add-btn" onclick="openEnemyModal()">+ Add Enemy Type</button>
+    </div>
+  </div>
+
+  <!-- Collectibles -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Collectibles</div>
+    <div class="section-body">
+      <div class="entity-list" id="collectibleList"></div>
+      <button class="add-btn" onclick="openCollectibleModal()">+ Add Collectible Type</button>
+    </div>
+  </div>
+
+  <!-- Level -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Level Design</div>
+    <div class="section-body">
+      <div class="control-row">
+        <label>Level Name</label>
+        <input type="text" id="levelName" value="Level 1" oninput="state.level.name=this.value; updateAll()">
+      </div>
+      <div class="control-row">
+        <label>Spawn X</label>
+        <input type="number" value="50" min="0" max="1200" oninput="state.level.spawn.x=+this.value; updateAll()">
+      </div>
+      <div class="control-row">
+        <label>Spawn Y</label>
+        <input type="number" value="400" min="0" max="800" oninput="state.level.spawn.y=+this.value; updateAll()">
+      </div>
+      <div class="toggle-row">
+        <label style="flex:1">Show Grid</label>
+        <div class="toggle">
+          <input type="checkbox" id="showGrid" checked onchange="state.showGrid=this.checked; updateAll()">
+          <span class="slider" onclick="let c=document.getElementById('showGrid'); c.checked=!c.checked; state.showGrid=c.checked; updateAll()"></span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label style="flex:1">Has Exit</label>
+        <div class="toggle">
+          <input type="checkbox" id="hasExit" checked onchange="state.level.hasExit=this.checked; updateAll()">
+          <span class="slider" onclick="let c=document.getElementById('hasExit'); c.checked=!c.checked; state.level.hasExit=c.checked; updateAll()"></span>
+        </div>
+      </div>
+      <p style="font-size:10px; color:var(--text-muted); margin-top:4px; line-height:1.4">
+        Click the preview to place platforms. Shift+click to place enemies. Ctrl/Cmd+click for collectibles. Right-click to remove.
+      </p>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">HUD</div>
+    <div class="section-body">
+      <div class="toggle-row">
+        <label style="flex:1">Show Score</label>
+        <div class="toggle">
+          <input type="checkbox" id="showScore" checked onchange="state.hud.score=this.checked; updateAll()">
+          <span class="slider" onclick="let c=document.getElementById('showScore'); c.checked=!c.checked; state.hud.score=c.checked; updateAll()"></span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label style="flex:1">Show Lives</label>
+        <div class="toggle">
+          <input type="checkbox" id="showLives" checked onchange="state.hud.lives=this.checked; updateAll()">
+          <span class="slider" onclick="let c=document.getElementById('showLives'); c.checked=!c.checked; state.hud.lives=c.checked; updateAll()"></span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <label style="flex:1">Show Timer</label>
+        <div class="toggle">
+          <input type="checkbox" id="showTimer" onchange="state.hud.timer=this.checked; updateAll()">
+          <span class="slider" onclick="let c=document.getElementById('showTimer'); c.checked=!c.checked; state.hud.timer=c.checked; updateAll()"></span>
+        </div>
+      </div>
+      <div class="control-row">
+        <label>Font Size</label>
+        <input type="range" min="12" max="32" step="1" value="20" oninput="state.hud.fontSize=+this.value; document.getElementById('fontVal').textContent=this.value; updateAll()">
+        <span class="value" id="fontVal">20</span>
+      </div>
+      <div class="control-row">
+        <label>HUD Color</label>
+        <input type="color" value="#FFFFFF" oninput="state.hud.color=this.value; updateAll()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules -->
+  <div class="section">
+    <div class="section-header" onclick="toggleSection(this)">Rules</div>
+    <div class="section-body">
+      <div class="control-row">
+        <label>Win</label>
+        <select onchange="state.rules.win=this.value; updateAll()" id="winSelect">
+          <option value="reachExit">Reach Exit</option>
+          <option value="collectAll coin">Collect All Coins</option>
+          <option value="defeatAll">Defeat All Enemies</option>
+          <option value="survive 60">Survive 60s</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Lose</label>
+        <select onchange="state.rules.lose=this.value; updateAll()" id="loseSelect">
+          <option value="noLives">No Lives</option>
+          <option value="timerExpires">Timer Expires</option>
+          <option value="fallOff">Fall Off Map</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="preview-area" id="previewArea">
+    <canvas class="preview-canvas" id="previewCanvas"></canvas>
+    <div class="preview-overlay">
+      <button class="overlay-btn" onclick="state.placementMode='platform'; updatePlacementUI()" id="modePlatform">Platform</button>
+      <button class="overlay-btn" onclick="state.placementMode='enemy'; updatePlacementUI()" id="modeEnemy">Enemy</button>
+      <button class="overlay-btn" onclick="state.placementMode='collectible'; updatePlacementUI()" id="modeCollectible">Collectible</button>
+      <button class="overlay-btn" onclick="state.placementMode='exit'; updatePlacementUI()" id="modeExit">Exit</button>
+      <button class="overlay-btn" onclick="state.placementMode='spawn'; updatePlacementUI()" id="modeSpawn">Spawn</button>
+    </div>
+    <div class="preview-info" id="previewInfo">800 x 600</div>
+    <div class="drag-hint" id="dragHint">Click the canvas to place objects<br>Use the mode buttons above or hotkeys:<br>1 = Platform, 2 = Enemy, 3 = Collectible, 4 = Exit, 5 = Spawn</div>
+  </div>
+
+  <div class="output-area">
+    <div class="output-tabs">
+      <button class="output-tab active" onclick="switchTab('dsl')">DSL Code</button>
+      <button class="output-tab" onclick="switchTab('prompt')">Prompt</button>
+    </div>
+    <div class="output-content" id="outputContent">
+      <button class="copy-btn" id="copyBtn" onclick="copyOutput()">Copy</button>
+      <pre id="dslOutput"></pre>
+      <div class="prompt-text" id="promptOutput" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Enemy Modal -->
+<div class="modal-overlay" id="enemyModal">
+  <div class="modal">
+    <h3>Add Enemy Type</h3>
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" id="enemyName" placeholder="e.g. goomba">
+    </div>
+    <div class="form-row">
+      <label>Movement</label>
+      <select id="enemyMovement" onchange="updateEnemyFields()">
+        <option value="patrol">Patrol</option>
+        <option value="chase">Chase</option>
+        <option value="fly">Fly</option>
+        <option value="static">Static</option>
+      </select>
+    </div>
+    <div id="enemyMoveFields">
+      <div class="form-row">
+        <label>Speed</label>
+        <input type="number" id="enemySpeed" value="50">
+      </div>
+      <div class="form-row" id="enemyDistRow">
+        <label>Distance</label>
+        <input type="number" id="enemyDist" value="120">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Damage</label>
+      <input type="number" id="enemyDamage" value="1" min="1" max="10">
+    </div>
+    <div class="form-row">
+      <label>Stompable</label>
+      <select id="enemyStompable">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('enemyModal')">Cancel</button>
+      <button class="btn-confirm" onclick="addEnemy()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Collectible Modal -->
+<div class="modal-overlay" id="collectibleModal">
+  <div class="modal">
+    <h3>Add Collectible Type</h3>
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" id="collectName" placeholder="e.g. coin">
+    </div>
+    <div class="form-row">
+      <label>Score</label>
+      <input type="number" id="collectScore" value="10" min="0">
+    </div>
+    <div class="form-row">
+      <label>Effect</label>
+      <select id="collectEffect">
+        <option value="none">None</option>
+        <option value="extraLife">Extra Life</option>
+        <option value="speedBoost">Speed Boost</option>
+        <option value="invincible">Invincible</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('collectibleModal')">Cancel</button>
+      <button class="btn-confirm" onclick="addCollectible()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+const DEFAULTS = {
+  title: 'My Platformer',
+  config: { width: 800, height: 600, gravity: 500, background: '#87CEEB' },
+  player: { speed: 160, jumpForce: 330, lives: 3, controls: 'arrows' },
+};
+
+const state = {
+  title: 'My Platformer',
+  config: { width: 800, height: 600, gravity: 500, background: '#87CEEB' },
+  player: { speed: 200, jumpForce: 420, lives: 3, controls: 'arrows' },
+  enemies: [
+    { name: 'goomba', movement: 'patrol', params: { speed: 50, distance: 120 }, damage: 1, stompable: true }
+  ],
+  collectibles: [
+    { name: 'coin', score: 10, effect: 'none' }
+  ],
+  level: {
+    name: 'Level 1',
+    spawn: { x: 50, y: 400 },
+    platforms: [
+      { x: 0, y: 580, w: 800, h: 20 },
+      { x: 150, y: 460, w: 120, h: 20 },
+      { x: 350, y: 380, w: 120, h: 20 },
+      { x: 550, y: 300, w: 120, h: 20 },
+      { x: 200, y: 220, w: 120, h: 20 },
+    ],
+    enemyPlacements: [
+      { type: 'goomba', x: 300, y: 350 },
+      { type: 'goomba', x: 600, y: 270 },
+    ],
+    collectiblePlacements: [
+      { type: 'coin', x: 170, y: 420 },
+      { type: 'coin', x: 370, y: 340 },
+      { type: 'coin', x: 570, y: 260 },
+      { type: 'coin', x: 220, y: 180 },
+    ],
+    hasExit: true,
+    exit: { x: 250, y: 180 },
+  },
+  hud: { score: true, lives: true, timer: false, fontSize: 20, color: '#FFFFFF' },
+  rules: { win: 'reachExit', lose: 'noLives' },
+  showGrid: true,
+  placementMode: 'platform',
+  activeTab: 'dsl',
+};
+
+// =====================================================================
+// PRESETS
+// =====================================================================
+const presets = {
+  simple: {
+    title: 'Simple Platformer',
+    config: { width: 800, height: 600, gravity: 500, background: '#87CEEB' },
+    player: { speed: 200, jumpForce: 420, lives: 3, controls: 'arrows' },
+    enemies: [{ name: 'goomba', movement: 'patrol', params: { speed: 50, distance: 120 }, damage: 1, stompable: true }],
+    collectibles: [{ name: 'coin', score: 10, effect: 'none' }],
+    level: {
+      name: 'Level 1',
+      spawn: { x: 50, y: 400 },
+      platforms: [
+        { x: 0, y: 580, w: 800, h: 20 },
+        { x: 150, y: 460, w: 120, h: 20 },
+        { x: 350, y: 380, w: 120, h: 20 },
+        { x: 550, y: 300, w: 120, h: 20 },
+        { x: 200, y: 220, w: 120, h: 20 },
+      ],
+      enemyPlacements: [{ type: 'goomba', x: 300, y: 350 }, { type: 'goomba', x: 600, y: 270 }],
+      collectiblePlacements: [
+        { type: 'coin', x: 170, y: 420 },
+        { type: 'coin', x: 370, y: 340 },
+        { type: 'coin', x: 570, y: 260 },
+        { type: 'coin', x: 220, y: 180 },
+      ],
+      hasExit: true,
+      exit: { x: 250, y: 180 },
+    },
+    hud: { score: true, lives: true, timer: false, fontSize: 20, color: '#FFFFFF' },
+    rules: { win: 'reachExit', lose: 'noLives' },
+  },
+  dungeon: {
+    title: 'Dungeon Crawl',
+    config: { width: 800, height: 600, gravity: 500, background: '#2D1B69' },
+    player: { speed: 220, jumpForce: 400, lives: 5, controls: 'both' },
+    enemies: [
+      { name: 'walker', movement: 'patrol', params: { speed: 40, distance: 100 }, damage: 1, stompable: true },
+      { name: 'ghost', movement: 'chase', params: { speed: 60, range: 200 }, damage: 1, stompable: false },
+      { name: 'bat', movement: 'fly', params: { speed: 30, amplitude: 40, frequency: 2 }, damage: 1, stompable: true },
+    ],
+    collectibles: [
+      { name: 'coin', score: 25, effect: 'none' },
+      { name: 'heart', score: 0, effect: 'extraLife' },
+    ],
+    level: {
+      name: 'Dungeon',
+      spawn: { x: 50, y: 400 },
+      platforms: [
+        { x: 0, y: 580, w: 800, h: 20 },
+        { x: 0, y: 0, w: 20, h: 600 },
+        { x: 780, y: 0, w: 20, h: 600 },
+        { x: 100, y: 460, w: 150, h: 20 },
+        { x: 350, y: 400, w: 100, h: 20 },
+        { x: 550, y: 340, w: 150, h: 20 },
+        { x: 200, y: 280, w: 120, h: 20 },
+        { x: 450, y: 220, w: 100, h: 20 },
+      ],
+      enemyPlacements: [
+        { type: 'walker', x: 150, y: 430 },
+        { type: 'ghost', x: 400, y: 370 },
+        { type: 'bat', x: 600, y: 250 },
+      ],
+      collectiblePlacements: [
+        { type: 'coin', x: 120, y: 420 },
+        { type: 'coin', x: 370, y: 360 },
+        { type: 'coin', x: 570, y: 300 },
+        { type: 'coin', x: 220, y: 240 },
+        { type: 'coin', x: 470, y: 180 },
+        { type: 'heart', x: 400, y: 550 },
+      ],
+      hasExit: false,
+      exit: { x: 400, y: 100 },
+    },
+    hud: { score: true, lives: true, timer: false, fontSize: 22, color: '#FFD700' },
+    rules: { win: 'collectAll coin', lose: 'noLives' },
+  },
+  sky: {
+    title: 'Sky Chase',
+    config: { width: 1000, height: 600, gravity: 350, background: '#1a1a3e' },
+    player: { speed: 280, jumpForce: 500, lives: 3, controls: 'arrows' },
+    enemies: [
+      { name: 'drone', movement: 'fly', params: { speed: 60, amplitude: 60, frequency: 1 }, damage: 1, stompable: true },
+      { name: 'turret', movement: 'static', params: {}, damage: 2, stompable: false },
+    ],
+    collectibles: [
+      { name: 'star', score: 50, effect: 'none' },
+      { name: 'shield', score: 0, effect: 'invincible' },
+    ],
+    level: {
+      name: 'Skyway',
+      spawn: { x: 30, y: 500 },
+      platforms: [
+        { x: 0, y: 580, w: 200, h: 20 },
+        { x: 250, y: 500, w: 100, h: 20 },
+        { x: 420, y: 420, w: 80, h: 20 },
+        { x: 570, y: 350, w: 120, h: 20 },
+        { x: 750, y: 290, w: 80, h: 20 },
+        { x: 880, y: 220, w: 120, h: 20 },
+      ],
+      enemyPlacements: [
+        { type: 'drone', x: 350, y: 350 },
+        { type: 'drone', x: 650, y: 200 },
+        { type: 'turret', x: 580, y: 330 },
+      ],
+      collectiblePlacements: [
+        { type: 'star', x: 270, y: 460 },
+        { type: 'star', x: 440, y: 380 },
+        { type: 'star', x: 770, y: 250 },
+        { type: 'shield', x: 900, y: 180 },
+      ],
+      hasExit: true,
+      exit: { x: 920, y: 180 },
+    },
+    hud: { score: true, lives: true, timer: false, fontSize: 18, color: '#FFFFFF' },
+    rules: { win: 'reachExit', lose: 'fallOff' },
+  },
+  arena: {
+    title: 'Arena Survival',
+    config: { width: 800, height: 600, gravity: 600, background: '#3d0000' },
+    player: { speed: 250, jumpForce: 380, lives: 5, controls: 'both' },
+    enemies: [
+      { name: 'slime', movement: 'patrol', params: { speed: 70, distance: 150 }, damage: 1, stompable: true },
+      { name: 'hunter', movement: 'chase', params: { speed: 80, range: 300 }, damage: 2, stompable: false },
+    ],
+    collectibles: [
+      { name: 'gem', score: 100, effect: 'none' },
+      { name: 'potion', score: 0, effect: 'speedBoost' },
+    ],
+    level: {
+      name: 'Arena',
+      spawn: { x: 400, y: 300 },
+      platforms: [
+        { x: 0, y: 580, w: 800, h: 20 },
+        { x: 0, y: 0, w: 800, h: 20 },
+        { x: 0, y: 0, w: 20, h: 600 },
+        { x: 780, y: 0, w: 20, h: 600 },
+        { x: 150, y: 450, w: 200, h: 20 },
+        { x: 450, y: 450, w: 200, h: 20 },
+        { x: 300, y: 320, w: 200, h: 20 },
+        { x: 100, y: 200, w: 150, h: 20 },
+        { x: 550, y: 200, w: 150, h: 20 },
+      ],
+      enemyPlacements: [
+        { type: 'slime', x: 200, y: 420 },
+        { type: 'slime', x: 500, y: 420 },
+        { type: 'hunter', x: 350, y: 290 },
+        { type: 'slime', x: 150, y: 170 },
+      ],
+      collectiblePlacements: [
+        { type: 'gem', x: 390, y: 280 },
+        { type: 'potion', x: 160, y: 160 },
+      ],
+      hasExit: false,
+      exit: { x: 400, y: 100 },
+    },
+    hud: { score: true, lives: true, timer: true, fontSize: 20, color: '#FF4444' },
+    rules: { win: 'survive 60', lose: 'noLives' },
+  },
+  minimal: {
+    title: 'Minimal Game',
+    config: { width: 800, height: 600, gravity: 500, background: '#87CEEB' },
+    player: { speed: 160, jumpForce: 330, lives: 3, controls: 'arrows' },
+    enemies: [],
+    collectibles: [],
+    level: {
+      name: 'Level 1',
+      spawn: { x: 50, y: 540 },
+      platforms: [{ x: 0, y: 580, w: 800, h: 20 }],
+      enemyPlacements: [],
+      collectiblePlacements: [],
+      hasExit: false,
+      exit: { x: 750, y: 540 },
+    },
+    hud: { score: false, lives: false, timer: false, fontSize: 20, color: '#FFFFFF' },
+    rules: { win: 'reachExit', lose: 'noLives' },
+  },
+};
+
+// =====================================================================
+// COLORS for entities
+// =====================================================================
+const ENEMY_COLORS = ['#ef4444', '#f97316', '#a855f7', '#ec4899', '#f43f5e'];
+const COLLECT_COLORS = ['#eab308', '#22c55e', '#06b6d4', '#8b5cf6', '#f472b6'];
+
+function enemyColor(idx) { return ENEMY_COLORS[idx % ENEMY_COLORS.length]; }
+function collectColor(idx) { return COLLECT_COLORS[idx % COLLECT_COLORS.length]; }
+
+// =====================================================================
+// SECTION TOGGLE
+// =====================================================================
+function toggleSection(header) {
+  header.classList.toggle('collapsed');
+  header.nextElementSibling.classList.toggle('collapsed');
+}
+
+// =====================================================================
+// ENTITY LISTS
+// =====================================================================
+function renderEntityLists() {
+  // Enemies
+  const el = document.getElementById('enemyList');
+  el.innerHTML = state.enemies.map((e, i) => {
+    const moveInfo = e.movement === 'static' ? 'static' :
+      e.movement === 'patrol' ? `patrol spd:${e.params.speed} dist:${e.params.distance}` :
+      e.movement === 'chase' ? `chase spd:${e.params.speed} rng:${e.params.range}` :
+      `fly spd:${e.params.speed} amp:${e.params.amplitude}`;
+    return `<div class="entity-item">
+      <span class="name" style="color:${enemyColor(i)}">${e.name}</span>
+      <span class="info">${moveInfo}${e.stompable ? ' stomp' : ''}</span>
+      <button class="remove-btn" onclick="removeEnemy(${i})">&times;</button>
+    </div>`;
+  }).join('');
+
+  // Collectibles
+  const cl = document.getElementById('collectibleList');
+  cl.innerHTML = state.collectibles.map((c, i) => {
+    const info = c.effect !== 'none' ? `${c.score}pts ${c.effect}` : `${c.score}pts`;
+    return `<div class="entity-item">
+      <span class="name" style="color:${collectColor(i)}">${c.name}</span>
+      <span class="info">${info}</span>
+      <button class="remove-btn" onclick="removeCollectible(${i})">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+function removeEnemy(idx) {
+  const name = state.enemies[idx].name;
+  state.enemies.splice(idx, 1);
+  state.level.enemyPlacements = state.level.enemyPlacements.filter(e => e.type !== name || state.enemies.some(en => en.name === name));
+  updateAll();
+}
+
+function removeCollectible(idx) {
+  const name = state.collectibles[idx].name;
+  state.collectibles.splice(idx, 1);
+  state.level.collectiblePlacements = state.level.collectiblePlacements.filter(c => c.type !== name || state.collectibles.some(co => co.name === name));
+  updateAll();
+}
+
+// =====================================================================
+// MODALS
+// =====================================================================
+function openEnemyModal() { document.getElementById('enemyModal').classList.add('active'); }
+function openCollectibleModal() { document.getElementById('collectibleModal').classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function updateEnemyFields() {
+  const move = document.getElementById('enemyMovement').value;
+  const fields = document.getElementById('enemyMoveFields');
+  const distRow = document.getElementById('enemyDistRow');
+  if (move === 'static') {
+    fields.style.display = 'none';
+  } else {
+    fields.style.display = '';
+    const distLabel = distRow.querySelector('label');
+    if (move === 'patrol') { distLabel.textContent = 'Distance'; distRow.style.display = ''; }
+    else if (move === 'chase') { distLabel.textContent = 'Range'; distRow.style.display = ''; }
+    else if (move === 'fly') { distLabel.textContent = 'Amplitude'; distRow.style.display = ''; }
+  }
+}
+
+function addEnemy() {
+  const name = document.getElementById('enemyName').value.trim() || 'enemy' + (state.enemies.length + 1);
+  const movement = document.getElementById('enemyMovement').value;
+  const speed = +document.getElementById('enemySpeed').value || 50;
+  const dist = +document.getElementById('enemyDist').value || 120;
+  const damage = +document.getElementById('enemyDamage').value || 1;
+  const stompable = document.getElementById('enemyStompable').value === 'true';
+
+  const params = {};
+  if (movement === 'patrol') { params.speed = speed; params.distance = dist; }
+  else if (movement === 'chase') { params.speed = speed; params.range = dist; }
+  else if (movement === 'fly') { params.speed = speed; params.amplitude = dist; params.frequency = 2; }
+
+  state.enemies.push({ name, movement, params, damage, stompable });
+  closeModal('enemyModal');
+  document.getElementById('enemyName').value = '';
+  updateAll();
+}
+
+function addCollectible() {
+  const name = document.getElementById('collectName').value.trim() || 'item' + (state.collectibles.length + 1);
+  const score = +document.getElementById('collectScore').value || 0;
+  const effect = document.getElementById('collectEffect').value;
+  state.collectibles.push({ name, score, effect });
+  closeModal('collectibleModal');
+  document.getElementById('collectName').value = '';
+  updateAll();
+}
+
+// =====================================================================
+// PRESET LOADING
+// =====================================================================
+function loadPreset(name) {
+  const p = presets[name];
+  if (!p) return;
+
+  state.title = p.title;
+  state.config = { ...p.config };
+  state.player = { ...p.player };
+  state.enemies = p.enemies.map(e => ({ ...e, params: { ...e.params } }));
+  state.collectibles = p.collectibles.map(c => ({ ...c }));
+  state.level = {
+    ...p.level,
+    spawn: { ...p.level.spawn },
+    exit: { ...p.level.exit },
+    platforms: p.level.platforms.map(pl => ({ ...pl })),
+    enemyPlacements: p.level.enemyPlacements.map(e => ({ ...e })),
+    collectiblePlacements: p.level.collectiblePlacements.map(c => ({ ...c })),
+  };
+  state.hud = { ...p.hud };
+  state.rules = { ...p.rules };
+
+  // Update all UI controls
+  syncControlsToState();
+  updateAll();
+
+  // Update preset buttons
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().includes(name) ||
+      (name === 'simple' && btn.textContent === 'Simple Platformer') ||
+      (name === 'dungeon' && btn.textContent === 'Dungeon Crawl') ||
+      (name === 'sky' && btn.textContent === 'Sky Chase') ||
+      (name === 'arena' && btn.textContent === 'Arena Survival') ||
+      (name === 'minimal' && btn.textContent === 'Minimal'));
+  });
+}
+
+function syncControlsToState() {
+  document.getElementById('gameTitle').value = state.title;
+
+  // Config sliders
+  const sidebar = document.querySelector('.sidebar');
+  const ranges = sidebar.querySelectorAll('input[type="range"]');
+  const valMap = {
+    'widthVal': state.config.width,
+    'heightVal': state.config.height,
+    'gravVal': state.config.gravity,
+    'speedVal': state.player.speed,
+    'jumpVal': state.player.jumpForce,
+    'livesVal': state.player.lives,
+    'fontVal': state.hud.fontSize,
+  };
+
+  // Set range inputs by matching their oninput attribute
+  ranges.forEach(r => {
+    const attr = r.getAttribute('oninput') || '';
+    if (attr.includes('config.width')) { r.value = state.config.width; }
+    else if (attr.includes('config.height')) { r.value = state.config.height; }
+    else if (attr.includes('config.gravity')) { r.value = state.config.gravity; }
+    else if (attr.includes('player.speed')) { r.value = state.player.speed; }
+    else if (attr.includes('player.jumpForce')) { r.value = state.player.jumpForce; }
+    else if (attr.includes('player.lives')) { r.value = state.player.lives; }
+    else if (attr.includes('hud.fontSize')) { r.value = state.hud.fontSize; }
+  });
+
+  Object.entries(valMap).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+
+  // Color pickers
+  const colorInputs = sidebar.querySelectorAll('input[type="color"]');
+  colorInputs.forEach(c => {
+    const attr = c.getAttribute('oninput') || '';
+    if (attr.includes('config.background')) c.value = state.config.background;
+    else if (attr.includes('hud.color')) c.value = state.hud.color;
+  });
+
+  // Selects
+  const playerControls = sidebar.querySelector('select[onchange*="player.controls"]');
+  if (playerControls) playerControls.value = state.player.controls;
+
+  document.getElementById('winSelect').value = state.rules.win;
+  document.getElementById('loseSelect').value = state.rules.lose;
+
+  // Toggles
+  document.getElementById('showScore').checked = state.hud.score;
+  document.getElementById('showLives').checked = state.hud.lives;
+  document.getElementById('showTimer').checked = state.hud.timer;
+  document.getElementById('hasExit').checked = state.level.hasExit;
+
+  // Level name and spawn
+  document.getElementById('levelName').value = state.level.name;
+  const numInputs = sidebar.querySelectorAll('input[type="number"]');
+  numInputs.forEach(n => {
+    const attr = n.getAttribute('oninput') || '';
+    if (attr.includes('spawn.x')) n.value = state.level.spawn.x;
+    else if (attr.includes('spawn.y')) n.value = state.level.spawn.y;
+  });
+}
+
+// =====================================================================
+// PLACEMENT MODE
+// =====================================================================
+function updatePlacementUI() {
+  const modes = ['platform', 'enemy', 'collectible', 'exit', 'spawn'];
+  modes.forEach(m => {
+    const btn = document.getElementById('mode' + m.charAt(0).toUpperCase() + m.slice(1));
+    if (btn) btn.classList.toggle('active', state.placementMode === m);
+  });
+}
+
+// =====================================================================
+// CANVAS RENDERING
+// =====================================================================
+const canvas = document.getElementById('previewCanvas');
+const ctx = canvas.getContext('2d');
+let canvasScale = 1;
+
+function renderPreview() {
+  const area = document.getElementById('previewArea');
+  const rect = area.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+
+  const gw = state.config.width;
+  const gh = state.config.height;
+  canvasScale = Math.min(rect.width / gw, rect.height / gh);
+  const ox = (rect.width - gw * canvasScale) / 2;
+  const oy = (rect.height - gh * canvasScale) / 2;
+
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+
+  // Background outside game area
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, rect.width, rect.height);
+
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(canvasScale, canvasScale);
+
+  // Game background
+  ctx.fillStyle = state.config.background;
+  ctx.fillRect(0, 0, gw, gh);
+
+  // Grid
+  if (state.showGrid) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= gw; x += 50) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, gh); ctx.stroke();
+    }
+    for (let y = 0; y <= gh; y += 50) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(gw, y); ctx.stroke();
+    }
+  }
+
+  // Platforms
+  state.level.platforms.forEach(p => {
+    ctx.fillStyle = 'rgba(139,90,43,0.85)';
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeStyle = 'rgba(100,60,20,0.9)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+    // Top edge highlight
+    ctx.fillStyle = 'rgba(34,197,94,0.6)';
+    ctx.fillRect(p.x, p.y, p.w, 3);
+  });
+
+  // Enemy placements
+  state.level.enemyPlacements.forEach(ep => {
+    const eidx = state.enemies.findIndex(e => e.name === ep.type);
+    if (eidx < 0) return;
+    const col = enemyColor(eidx);
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(ep.x, ep.y, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(ep.x - 3, ep.y - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ep.x + 3, ep.y - 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(ep.x - 2, ep.y - 2, 1, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ep.x + 4, ep.y - 2, 1, 0, Math.PI * 2); ctx.fill();
+    // Label
+    ctx.fillStyle = col;
+    ctx.font = '8px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(ep.type, ep.x, ep.y + 20);
+  });
+
+  // Collectible placements
+  state.level.collectiblePlacements.forEach(cp => {
+    const cidx = state.collectibles.findIndex(c => c.name === cp.type);
+    if (cidx < 0) return;
+    const col = collectColor(cidx);
+    ctx.fillStyle = col;
+    // Diamond shape
+    ctx.beginPath();
+    ctx.moveTo(cp.x, cp.y - 8);
+    ctx.lineTo(cp.x + 6, cp.y);
+    ctx.lineTo(cp.x, cp.y + 8);
+    ctx.lineTo(cp.x - 6, cp.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = col;
+    ctx.font = '8px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(cp.type, cp.x, cp.y + 18);
+  });
+
+  // Spawn point
+  ctx.fillStyle = '#3b82f6';
+  ctx.strokeStyle = '#1d4ed8';
+  ctx.lineWidth = 2;
+  const sx = state.level.spawn.x, sy = state.level.spawn.y;
+  // Player shape
+  ctx.fillRect(sx - 8, sy - 16, 16, 24);
+  ctx.strokeRect(sx - 8, sy - 16, 16, 24);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 8px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('P', sx, sy - 1);
+  // Spawn label
+  ctx.fillStyle = '#3b82f6';
+  ctx.font = '9px system-ui';
+  ctx.fillText('SPAWN', sx, sy + 18);
+
+  // Exit point
+  if (state.level.hasExit) {
+    const ex = state.level.exit.x, ey = state.level.exit.y;
+    ctx.fillStyle = 'rgba(16,185,129,0.3)';
+    ctx.fillRect(ex - 12, ey - 20, 24, 30);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(ex - 12, ey - 20, 24, 30);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('EXIT', ex, ey + 2);
+  }
+
+  // HUD preview
+  if (state.hud.score || state.hud.lives || state.hud.timer) {
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(0, 0, gw, 36);
+    ctx.font = `${Math.min(state.hud.fontSize, 18)}px system-ui`;
+    ctx.fillStyle = state.hud.color;
+    if (state.hud.score) {
+      ctx.textAlign = 'left';
+      ctx.fillText('Score: 0', 10, 24);
+    }
+    if (state.hud.lives) {
+      ctx.textAlign = 'right';
+      const hearts = '\u2665'.repeat(state.player.lives);
+      ctx.fillText(hearts, gw - 10, 24);
+    }
+    if (state.hud.timer) {
+      ctx.textAlign = 'center';
+      ctx.fillText('0:00', gw / 2, 24);
+    }
+  }
+
+  ctx.restore();
+
+  // Info
+  document.getElementById('previewInfo').textContent = `${gw} x ${gh} | gravity: ${state.config.gravity} | ${state.level.platforms.length} platforms`;
+
+  // Hide hint if there are objects
+  const hint = document.getElementById('dragHint');
+  if (state.level.platforms.length > 1 || state.level.enemyPlacements.length > 0 || state.level.collectiblePlacements.length > 0) {
+    hint.classList.add('hidden');
+  } else {
+    hint.classList.remove('hidden');
+  }
+}
+
+// =====================================================================
+// CANVAS INTERACTION
+// =====================================================================
+function canvasToGame(clientX, clientY) {
+  const area = document.getElementById('previewArea');
+  const rect = area.getBoundingClientRect();
+  const gw = state.config.width;
+  const gh = state.config.height;
+  const scale = Math.min(rect.width / gw, rect.height / gh);
+  const ox = (rect.width - gw * scale) / 2;
+  const oy = (rect.height - gh * scale) / 2;
+  return {
+    x: Math.round((clientX - rect.left - ox) / scale),
+    y: Math.round((clientY - rect.top - oy) / scale),
+  };
+}
+
+function snapToGrid(val, gridSize) {
+  return Math.round(val / gridSize) * gridSize;
+}
+
+canvas.addEventListener('click', (e) => {
+  if (e.button !== 0) return;
+  const pos = canvasToGame(e.clientX, e.clientY);
+  if (pos.x < 0 || pos.y < 0 || pos.x > state.config.width || pos.y > state.config.height) return;
+
+  const gx = state.showGrid ? snapToGrid(pos.x, 50) : pos.x;
+  const gy = state.showGrid ? snapToGrid(pos.y, 50) : pos.y;
+
+  // Override mode with modifier keys
+  let mode = state.placementMode;
+  if (e.shiftKey) mode = 'enemy';
+  if (e.ctrlKey || e.metaKey) mode = 'collectible';
+
+  if (mode === 'platform') {
+    state.level.platforms.push({ x: gx, y: gy, w: 120, h: 20 });
+  } else if (mode === 'enemy') {
+    if (state.enemies.length === 0) return;
+    state.level.enemyPlacements.push({ type: state.enemies[0].name, x: gx, y: gy });
+  } else if (mode === 'collectible') {
+    if (state.collectibles.length === 0) return;
+    state.level.collectiblePlacements.push({ type: state.collectibles[0].name, x: gx, y: gy });
+  } else if (mode === 'exit') {
+    state.level.exit = { x: gx, y: gy };
+    state.level.hasExit = true;
+    document.getElementById('hasExit').checked = true;
+  } else if (mode === 'spawn') {
+    state.level.spawn = { x: gx, y: gy };
+    const numInputs = document.querySelector('.sidebar').querySelectorAll('input[type="number"]');
+    numInputs.forEach(n => {
+      const attr = n.getAttribute('oninput') || '';
+      if (attr.includes('spawn.x')) n.value = gx;
+      else if (attr.includes('spawn.y')) n.value = gy;
+    });
+  }
+  updateAll();
+});
+
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const pos = canvasToGame(e.clientX, e.clientY);
+
+  // Try to remove the closest entity within threshold
+  const threshold = 20;
+  let removed = false;
+
+  // Check enemies
+  let minDist = Infinity, minIdx = -1;
+  state.level.enemyPlacements.forEach((ep, i) => {
+    const d = Math.hypot(ep.x - pos.x, ep.y - pos.y);
+    if (d < minDist) { minDist = d; minIdx = i; }
+  });
+  if (minDist < threshold) {
+    state.level.enemyPlacements.splice(minIdx, 1);
+    removed = true;
+  }
+
+  if (!removed) {
+    minDist = Infinity; minIdx = -1;
+    state.level.collectiblePlacements.forEach((cp, i) => {
+      const d = Math.hypot(cp.x - pos.x, cp.y - pos.y);
+      if (d < minDist) { minDist = d; minIdx = i; }
+    });
+    if (minDist < threshold) {
+      state.level.collectiblePlacements.splice(minIdx, 1);
+      removed = true;
+    }
+  }
+
+  if (!removed) {
+    // Check platforms (point in rect)
+    for (let i = state.level.platforms.length - 1; i >= 0; i--) {
+      const p = state.level.platforms[i];
+      if (pos.x >= p.x && pos.x <= p.x + p.w && pos.y >= p.y && pos.y <= p.y + p.h) {
+        state.level.platforms.splice(i, 1);
+        removed = true;
+        break;
+      }
+    }
+  }
+
+  if (removed) updateAll();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === '1') { state.placementMode = 'platform'; updatePlacementUI(); }
+  if (e.key === '2') { state.placementMode = 'enemy'; updatePlacementUI(); }
+  if (e.key === '3') { state.placementMode = 'collectible'; updatePlacementUI(); }
+  if (e.key === '4') { state.placementMode = 'exit'; updatePlacementUI(); }
+  if (e.key === '5') { state.placementMode = 'spawn'; updatePlacementUI(); }
+});
+
+// =====================================================================
+// DSL CODE GENERATION
+// =====================================================================
+function generateDSL() {
+  const lines = [];
+  const I = '  ';
+  const II = '    ';
+
+  lines.push(`game "${state.title}" {`);
+
+  // Config
+  const cfg = state.config;
+  const cfgParts = [];
+  cfgParts.push(`width: ${cfg.width}`);
+  cfgParts.push(`height: ${cfg.height}`);
+  cfgParts.push(`gravity: ${cfg.gravity}`);
+  cfgParts.push(`background: ${cfg.background.toUpperCase()}`);
+  lines.push(`${I}config { ${cfgParts.join(', ')} }`);
+  lines.push('');
+
+  // Assets — infer from entities
+  lines.push(`${I}assets {`);
+  lines.push(`${II}image playerSprite "assets/player.png"`);
+  lines.push(`${II}image platform "assets/platform.png"`);
+  const enemySprites = new Set();
+  state.enemies.forEach(e => {
+    const key = e.name + 'Sprite';
+    if (!enemySprites.has(key)) {
+      enemySprites.add(key);
+      lines.push(`${II}image ${key} "assets/${e.name}.png"`);
+    }
+  });
+  const collectSprites = new Set();
+  state.collectibles.forEach(c => {
+    const key = c.name + 'Sprite';
+    if (!collectSprites.has(key)) {
+      collectSprites.add(key);
+      lines.push(`${II}image ${key} "assets/${c.name}.png"`);
+    }
+  });
+  lines.push(`${I}}`);
+  lines.push('');
+
+  // Player
+  lines.push(`${I}player {`);
+  lines.push(`${II}sprite: playerSprite`);
+  lines.push(`${II}speed: ${state.player.speed}`);
+  lines.push(`${II}jumpForce: ${state.player.jumpForce}`);
+  lines.push(`${II}lives: ${state.player.lives}`);
+  lines.push(`${II}controls: ${state.player.controls}`);
+  lines.push(`${I}}`);
+  lines.push('');
+
+  // Enemies
+  state.enemies.forEach(e => {
+    lines.push(`${I}enemy ${e.name} {`);
+    lines.push(`${II}sprite: ${e.name}Sprite`);
+    if (e.movement === 'patrol') {
+      lines.push(`${II}movement: patrol { speed: ${e.params.speed}, distance: ${e.params.distance} }`);
+    } else if (e.movement === 'chase') {
+      lines.push(`${II}movement: chase { speed: ${e.params.speed}, range: ${e.params.range} }`);
+    } else if (e.movement === 'fly') {
+      lines.push(`${II}movement: fly { speed: ${e.params.speed}, amplitude: ${e.params.amplitude}, frequency: ${e.params.frequency || 2} }`);
+    } else {
+      lines.push(`${II}movement: static`);
+    }
+    lines.push(`${II}damage: ${e.damage}`);
+    lines.push(`${II}stompable: ${e.stompable}`);
+    lines.push(`${I}}`);
+    lines.push('');
+  });
+
+  // Collectibles
+  state.collectibles.forEach(c => {
+    lines.push(`${I}collectible ${c.name} {`);
+    lines.push(`${II}sprite: ${c.name}Sprite`);
+    lines.push(`${II}score: ${c.score}`);
+    if (c.effect !== 'none') {
+      lines.push(`${II}effect: ${c.effect}`);
+    }
+    lines.push(`${I}}`);
+    lines.push('');
+  });
+
+  // Level
+  lines.push(`${I}level "${state.level.name}" {`);
+  lines.push(`${II}spawn: { x: ${state.level.spawn.x}, y: ${state.level.spawn.y} }`);
+
+  if (state.level.platforms.length > 0) {
+    lines.push(`${II}platforms: [`);
+    state.level.platforms.forEach((p, i) => {
+      const comma = i < state.level.platforms.length - 1 ? ',' : '';
+      lines.push(`${II}  platform at (${p.x}, ${p.y}, ${p.w}, ${p.h})${comma}`);
+    });
+    lines.push(`${II}]`);
+  }
+
+  if (state.level.enemyPlacements.length > 0) {
+    const enemyParts = state.level.enemyPlacements.map(e => `${e.type} at (${e.x}, ${e.y})`);
+    if (enemyParts.length <= 3) {
+      lines.push(`${II}enemies: [${enemyParts.join(', ')}]`);
+    } else {
+      lines.push(`${II}enemies: [`);
+      enemyParts.forEach((p, i) => {
+        lines.push(`${II}  ${p}${i < enemyParts.length - 1 ? ',' : ''}`);
+      });
+      lines.push(`${II}]`);
+    }
+  }
+
+  if (state.level.collectiblePlacements.length > 0) {
+    const collectParts = state.level.collectiblePlacements.map(c => `${c.type} at (${c.x}, ${c.y})`);
+    if (collectParts.length <= 3) {
+      lines.push(`${II}coins: [${collectParts.join(', ')}]`);
+    } else {
+      lines.push(`${II}coins: [`);
+      collectParts.forEach((p, i) => {
+        lines.push(`${II}  ${p}${i < collectParts.length - 1 ? ',' : ''}`);
+      });
+      lines.push(`${II}]`);
+    }
+  }
+
+  if (state.level.hasExit) {
+    lines.push(`${II}exit: { x: ${state.level.exit.x}, y: ${state.level.exit.y} }`);
+  }
+
+  lines.push(`${I}}`);
+  lines.push('');
+
+  // HUD
+  if (state.hud.score || state.hud.lives || state.hud.timer) {
+    lines.push(`${I}hud {`);
+    if (state.hud.score) {
+      lines.push(`${II}score { position: top-left, fontSize: ${state.hud.fontSize}, color: ${state.hud.color.toUpperCase()} }`);
+    }
+    if (state.hud.lives) {
+      lines.push(`${II}lives { position: top-right, max: ${state.player.lives} }`);
+    }
+    if (state.hud.timer) {
+      lines.push(`${II}timer { position: top-center }`);
+    }
+    lines.push(`${I}}`);
+    lines.push('');
+  }
+
+  // Rules
+  lines.push(`${I}rules { win: ${state.rules.win}, lose: ${state.rules.lose} }`);
+  lines.push('}');
+
+  return lines.join('\n');
+}
+
+// =====================================================================
+// SYNTAX HIGHLIGHTED DSL
+// =====================================================================
+function highlightDSL(code) {
+  return code
+    .replace(/\/\/.*$/gm, m => `<span class="dsl-comment">${m}</span>`)
+    .replace(/\b(game|config|assets|player|enemy|collectible|level|hud|rules|sounds|animation|at|spritesheet|image|tilemap|audio|patrol|chase|fly|static|reachExit|collectAll|defeatAll|survive|noLives|timerExpires|fallOff|extraLife|speedBoost|invincible|none|arrows|wasd|both|score|lives|timer|true|false)\b/g,
+      m => `<span class="dsl-keyword">${m}</span>`)
+    .replace(/"([^"]*)"/g, (m, s) => `<span class="dsl-string">"${s}"</span>`)
+    .replace(/\b(\d+(?:\.\d+)?)\b/g, m => `<span class="dsl-number">${m}</span>`)
+    .replace(/\b(sprite|speed|jumpForce|lives|controls|movement|damage|stompable|effect|spawn|platforms|enemies|coins|exit|position|fontSize|color|max|width|height|gravity|background|distance|range|amplitude|frequency|win|lose|frames|fps|loop|frameWidth|frameHeight):/g,
+      (m, p) => `<span class="dsl-prop">${p}</span>:`)
+    .replace(/(#[A-Fa-f0-9]{6})/g, m => `<span class="dsl-number">${m}</span>`);
+}
+
+// =====================================================================
+// PROMPT GENERATION
+// =====================================================================
+function generatePrompt() {
+  const parts = [];
+
+  parts.push(`Create a Phaser platformer game called "${state.title}" using the Phaser Platformer DSL.`);
+  parts.push('');
+
+  // Config differences from defaults
+  const cfgDiffs = [];
+  if (state.config.width !== 800) cfgDiffs.push(`${state.config.width}px wide`);
+  if (state.config.height !== 600) cfgDiffs.push(`${state.config.height}px tall`);
+  if (state.config.gravity !== 500) {
+    const gDesc = state.config.gravity < 300 ? 'low' : state.config.gravity > 700 ? 'heavy' : 'moderate';
+    cfgDiffs.push(`${gDesc} gravity (${state.config.gravity})`);
+  }
+  if (state.config.background !== '#87CEEB') cfgDiffs.push(`background color ${state.config.background}`);
+  if (cfgDiffs.length > 0) {
+    parts.push(`Game canvas: ${cfgDiffs.join(', ')}.`);
+  }
+
+  // Player
+  const pDiffs = [];
+  if (state.player.speed !== 160) pDiffs.push(`speed ${state.player.speed}`);
+  if (state.player.jumpForce !== 330) {
+    const jDesc = state.player.jumpForce > 500 ? 'very high' : state.player.jumpForce > 400 ? 'high' : 'moderate';
+    pDiffs.push(`${jDesc} jump (${state.player.jumpForce})`);
+  }
+  if (state.player.lives !== 3) pDiffs.push(`${state.player.lives} lives`);
+  if (state.player.controls !== 'arrows') pDiffs.push(`${state.player.controls} controls`);
+  if (pDiffs.length > 0) {
+    parts.push(`Player: ${pDiffs.join(', ')}.`);
+  }
+
+  // Enemies
+  if (state.enemies.length > 0) {
+    const enemyDescs = state.enemies.map(e => {
+      let desc = `"${e.name}" (${e.movement}`;
+      if (e.movement !== 'static') desc += `, speed ${e.params.speed}`;
+      desc += e.stompable ? ', stompable' : ', not stompable';
+      desc += ')';
+      return desc;
+    });
+    parts.push(`Enemy types: ${enemyDescs.join('; ')}.`);
+  }
+
+  // Collectibles
+  if (state.collectibles.length > 0) {
+    const collectDescs = state.collectibles.map(c => {
+      let desc = `"${c.name}" (${c.score} pts`;
+      if (c.effect !== 'none') desc += `, ${c.effect} effect`;
+      desc += ')';
+      return desc;
+    });
+    parts.push(`Collectibles: ${collectDescs.join('; ')}.`);
+  }
+
+  // Level
+  parts.push('');
+  parts.push(`Level "${state.level.name}": ${state.level.platforms.length} platforms, ${state.level.enemyPlacements.length} enemies placed, ${state.level.collectiblePlacements.length} collectibles placed.`);
+  if (state.level.hasExit) {
+    parts.push(`Exit at (${state.level.exit.x}, ${state.level.exit.y}).`);
+  }
+
+  // HUD
+  const hudParts = [];
+  if (state.hud.score) hudParts.push('score');
+  if (state.hud.lives) hudParts.push('lives');
+  if (state.hud.timer) hudParts.push('timer');
+  if (hudParts.length > 0) {
+    parts.push(`HUD showing: ${hudParts.join(', ')}.`);
+  }
+
+  // Rules
+  parts.push(`Win condition: ${state.rules.win}. Lose condition: ${state.rules.lose}.`);
+
+  parts.push('');
+  parts.push('The complete DSL code is provided below. Compile it with the Phaser Platformer DSL compiler to generate a standalone HTML game.');
+
+  return parts.join('\n');
+}
+
+// =====================================================================
+// OUTPUT TABS
+// =====================================================================
+function switchTab(tab) {
+  state.activeTab = tab;
+  document.querySelectorAll('.output-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab === 'dsl' ? 'dsl' : 'prompt')));
+  document.getElementById('dslOutput').style.display = tab === 'dsl' ? '' : 'none';
+  document.getElementById('promptOutput').style.display = tab === 'prompt' ? '' : 'none';
+}
+
+function copyOutput() {
+  const text = state.activeTab === 'dsl'
+    ? generateDSL()
+    : generatePrompt() + '\n\n```\n' + generateDSL() + '\n```';
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// =====================================================================
+// MAIN UPDATE
+// =====================================================================
+function updateAll() {
+  renderEntityLists();
+  renderPreview();
+  document.getElementById('dslOutput').innerHTML = highlightDSL(generateDSL());
+  document.getElementById('promptOutput').textContent = generatePrompt();
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+window.addEventListener('resize', () => renderPreview());
+updatePlacementUI();
+updateAll();
+</script>
+</body>
+</html>
