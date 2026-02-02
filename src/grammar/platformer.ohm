@@ -1,0 +1,183 @@
+PlatformerDSL {
+  // ─── Top-Level ───────────────────────────────────────────
+
+  Game = "game" string "{" GameBlock+ "}"
+
+  GameBlock = ConfigBlock
+            | AssetsBlock
+            | PlayerBlock
+            | EnemyBlock
+            | CollectibleBlock
+            | LevelBlock
+            | HudBlock
+            | RulesBlock
+            | SoundsBlock
+
+  // ─── Config ──────────────────────────────────────────────
+
+  ConfigBlock = "config" "{" ConfigProp ("," ConfigProp)* ","? "}"
+
+  ConfigProp = "width" ":" number        -- width
+             | "height" ":" number       -- height
+             | "gravity" ":" number      -- gravity
+             | "background" ":" color    -- background
+
+  // ─── Assets ──────────────────────────────────────────────
+
+  AssetsBlock = "assets" "{" AssetDef+ "}"
+
+  AssetDef = "spritesheet" ident string SpritesheetConfig  -- spritesheet
+           | "image" ident string                          -- image
+           | "tilemap" ident string                        -- tilemap
+           | "audio" ident string                          -- audio
+
+  SpritesheetConfig = "{" "frameWidth" ":" number "," "frameHeight" ":" number ","? "}"
+
+  // ─── Player ──────────────────────────────────────────────
+
+  PlayerBlock = "player" "{" PlayerProp (","? PlayerProp)* ","? "}"
+
+  PlayerProp = "sprite" ":" ident                     -- sprite
+             | "speed" ":" number                     -- speed
+             | "jumpForce" ":" number                 -- jumpForce
+             | "lives" ":" number                     -- lives
+             | "controls" ":" controlScheme           -- controls
+             | AnimationBlock                         -- animation
+
+  controlScheme = "arrows" | "wasd" | "both"
+
+  // ─── Enemies ─────────────────────────────────────────────
+
+  EnemyBlock = "enemy" ident "{" EnemyProp (","? EnemyProp)* ","? "}"
+
+  EnemyProp = "sprite" ":" ident              -- sprite
+            | "movement" ":" MovementDef      -- movement
+            | "damage" ":" number             -- damage
+            | "stompable" ":" boolean         -- stompable
+            | AnimationBlock                  -- animation
+
+  MovementDef = "patrol" "{" MovementParam ("," MovementParam)* ","? "}"  -- patrol
+              | "chase" "{" MovementParam ("," MovementParam)* ","? "}"   -- chase
+              | "fly" "{" MovementParam ("," MovementParam)* ","? "}"     -- fly
+              | "static"                                                   -- static
+
+  MovementParam = "speed" ":" number       -- speed
+                | "distance" ":" number    -- distance
+                | "range" ":" number       -- range
+                | "amplitude" ":" number   -- amplitude
+                | "frequency" ":" number   -- frequency
+
+  // ─── Collectibles ────────────────────────────────────────
+
+  CollectibleBlock = "collectible" ident "{" CollectibleProp (","? CollectibleProp)* ","? "}"
+
+  CollectibleProp = "sprite" ":" ident              -- sprite
+                  | "score" ":" number              -- score
+                  | "effect" ":" collectibleEffect  -- effect
+                  | AnimationBlock                  -- animation
+
+  collectibleEffect = "extraLife" | "speedBoost" | "invincible" | "none"
+
+  // ─── Levels ──────────────────────────────────────────────
+
+  LevelBlock = "level" string "{" LevelProp+ "}"
+
+  LevelProp = "tilemap" ":" ident                                   -- tilemap
+            | "layers" ":" "{" LayerMapping ("," LayerMapping)* ","? "}"  -- layers
+            | "spawn" ":" "{" "x" ":" number "," "y" ":" number "}"      -- spawn
+            | "enemies" ":" "[" ListOf<EntityPlacement, ","> "]"         -- enemies
+            | "coins" ":" "[" ListOf<EntityPlacement, ","> "]"           -- coins
+            | "platforms" ":" "[" ListOf<PlatformPlacement, ","> "]"     -- platforms
+            | "exit" ":" "{" "x" ":" number "," "y" ":" number "}"       -- exit
+
+  LayerMapping = ident ":" string
+
+  EntityPlacement = ident "at" "(" number "," number ")"
+
+  PlatformPlacement = ident "at" "(" number "," number "," number "," number ")"
+
+  // ─── HUD ─────────────────────────────────────────────────
+
+  HudBlock = "hud" "{" HudElement+ "}"
+
+  HudElement = hudType "{" HudProp ("," HudProp)* ","? "}"
+
+  hudType = "score" | "lives" | "timer"
+
+  HudProp = "position" ":" hudPosition    -- position
+          | "fontSize" ":" number         -- fontSize
+          | "color" ":" color             -- color
+          | "max" ":" number              -- max
+
+  hudPosition = "top-left" | "top-right" | "top-center"
+              | "bottom-left" | "bottom-right" | "bottom-center"
+
+  // ─── Rules ───────────────────────────────────────────────
+
+  RulesBlock = "rules" "{" RuleProp ("," RuleProp)* ","? "}"
+
+  RuleProp = "win" ":" WinCondition        -- win
+           | "lose" ":" LoseCondition      -- lose
+           | "nextLevel" ":" string        -- nextLevel
+
+  WinCondition = "reachExit"                          -- reachExit
+               | "collectAll" ident                   -- collectAll
+               | "defeatAll"                          -- defeatAll
+               | "survive" number                     -- survive
+
+  LoseCondition = "noLives"        -- noLives
+                | "timerExpires"    -- timerExpires
+                | "fallOff"        -- fallOff
+
+  // ─── Sounds ──────────────────────────────────────────────
+
+  SoundsBlock = "sounds" "{" SoundProp (","? SoundProp)* ","? "}"
+
+  SoundProp = "jump" ":" ident      -- jump
+            | "collect" ":" ident   -- collect
+            | "hurt" ":" ident      -- hurt
+            | "win" ":" ident       -- win
+            | "lose" ":" ident      -- lose
+            | "bgm" ":" ident       -- bgm
+
+  // ─── Animations ──────────────────────────────────────────
+
+  AnimationBlock = "animation" ident "{" AnimProp ("," AnimProp)* ","? "}"
+
+  AnimProp = "frames" ":" "[" ListOf<number, ","> "]"  -- frames
+           | "fps" ":" number                          -- fps
+           | "loop" ":" boolean                        -- loop
+
+  // ─── Lexical Rules ──────────────────────────────────────
+
+  ident = ~reserved letter (alnum | "_")*
+
+  reserved = ("game" | "config" | "assets" | "player" | "enemy"
+            | "collectible" | "level" | "hud" | "rules" | "sounds"
+            | "animation" | "true" | "false" | "at"
+            | "spritesheet" | "image" | "tilemap" | "audio"
+            | "patrol" | "chase" | "fly" | "static"
+            | "reachExit" | "collectAll" | "defeatAll" | "survive"
+            | "noLives" | "timerExpires" | "fallOff"
+            | "extraLife" | "speedBoost" | "invincible" | "none"
+            | "arrows" | "wasd" | "both"
+            | "score" | "lives" | "timer") ~(alnum | "_")
+
+  string = "\"" stringChar* "\""
+  stringChar = escapeChar | normalChar
+  escapeChar = "\\" any
+  normalChar = ~("\"" | "\\") any
+
+  number = "-"? digit+ ("." digit+)?
+
+  boolean = "true" | "false"
+
+  color = "#" hexDigit hexDigit hexDigit hexDigit hexDigit hexDigit
+
+  // ─── Whitespace & Comments ───────────────────────────────
+
+  space += comment
+
+  comment = "//" (~"\n" any)* &("\n" | end)   -- singleLine
+          | "/*" (~"*/" any)* "*/"             -- multiLine
+}
