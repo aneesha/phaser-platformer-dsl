@@ -3,6 +3,7 @@ import { parseOrThrow } from './parser/index.js';
 import { toAST } from './semantic/index.js';
 import { validate } from './ast/validators.js';
 import { applyDefaults } from './ast/transforms.js';
+import { generate as generatorGenerate } from './generator/index.js';
 
 /**
  * Compile DSL source into a standalone Phaser.js game.
@@ -33,7 +34,6 @@ export function parseToAST(source: string): GameAST {
 /**
  * Generate Phaser.js code from a validated AST.
  */
-export function generate(_ast: GameAST, _options?: CompileOptions): CompileResult {
-  // Placeholder — implemented in Phase 4
-  throw new Error('Not yet implemented');
+export function generate(ast: GameAST, options?: CompileOptions): CompileResult {
+  return generatorGenerate(ast, options);
 }

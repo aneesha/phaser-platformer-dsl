@@ -128,9 +128,7 @@ export interface PlatformDef {
 
 // ─── Level ───────────────────────────────────────────────────────────
 
-export interface TilemapLayers {
-  readonly [layerName: string]: string;
-}
+export type TilemapLayers = Record<string, string>;
 
 export interface LevelDef {
   readonly name: string;

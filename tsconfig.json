@@ -14,7 +14,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "node"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "tests"]
