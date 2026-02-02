@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phaser Platformer DSL Playground</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Phaser Platformer DSL Playground</h1>
+      <div class="toolbar">
+        <button id="compileBtn">Compile</button>
+        <button id="exportBtn">Export HTML</button>
+      </div>
+    </header>
+    <div id="levelTabs"></div>
+    <main>
+      <div id="editorPane">
+        <div id="editor"></div>
+      </div>
+      <div id="previewPane">
+        <div id="spritePanel">
+          <h3>Entities</h3>
+          <div id="entityList"></div>
+        </div>
+        <iframe id="preview" sandbox="allow-scripts"></iframe>
+      </div>
+    </main>
+    <footer id="errorBar"></footer>
+  </div>
+  <script type="module" src="playground.ts"></script>
+</body>
+</html>

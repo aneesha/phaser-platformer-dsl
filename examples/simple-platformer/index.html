@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Platformer</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+<script>
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'BootScene' });
+  }
+
+  preload() {
+    this.load.image('platform', 'assets/platform.png');
+  }
+
+  create() {
+
+    this.scene.start('Level_Level_1');
+  }
+}
+
+class Level_Level_1 extends Phaser.Scene {
+  constructor() {
+    super({ key: 'Level_Level_1' });
+  }
+
+  create() {
+    this.score = this.registry.get("score") || 0;
+    this.lives = this.registry.get("lives") || 3;
+    this.maxLives = 3;
+    this.winCondition = "reachExit";
+    this.isGameOver = false;
+
+    this.cameras.main.setBackgroundColor('#87CEEB');
+
+this.cursors = this.input.keyboard.createCursorKeys();
+
+this.player = this.physics.add.sprite(50, 400, 'platform');
+this.player.setCollideWorldBounds(true);
+this.player.setBounce(0.1);
+
+    this.platforms = this.physics.add.staticGroup();
+    this.platforms.create(400, 590, 'platform').setDisplaySize(800, 20).refreshBody();
+    this.platforms.create(210, 470, 'platform').setDisplaySize(120, 20).refreshBody();
+    this.platforms.create(410, 390, 'platform').setDisplaySize(120, 20).refreshBody();
+    this.platforms.create(610, 310, 'platform').setDisplaySize(120, 20).refreshBody();
+    this.platforms.create(260, 230, 'platform').setDisplaySize(120, 20).refreshBody();
+    this.physics.add.collider(this.player, this.platforms);
+
+this.enemies = this.physics.add.group({ allowGravity: true });
+
+{
+  const enemy = this.enemies.create(300, 350, 'platform');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"goomba","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
+  enemy.setVelocityX(50);
+  enemy.patrolOriginX = 300;
+  enemy.patrolDistance = 120;
+  enemy.patrolSpeed = 50;
+}
+{
+  const enemy = this.enemies.create(600, 270, 'platform');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"goomba","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
+  enemy.setVelocityX(50);
+  enemy.patrolOriginX = 600;
+  enemy.patrolDistance = 120;
+  enemy.patrolSpeed = 50;
+}
+    this.physics.add.collider(this.enemies, this.platforms || []);
+
+this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+  const def = enemy.enemyDef;
+  if (!def) return;
+
+  // Stomp check: player falling and above enemy
+  if (def.stompable && player.body.velocity.y > 0 && player.y < enemy.y - 10) {
+    enemy.destroy();
+    player.setVelocityY(-200); // bounce
+    this.score += 50;
+  } else {
+    this.handlePlayerDamage(def.damage);
+  }
+});
+
+this.collectibles = this.physics.add.group({ allowGravity: false });
+
+{
+  const item = this.collectibles.create(170, 420, 'platform');
+  item.collectDef = {"name":"coin","score":10,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(370, 340, 'platform');
+  item.collectDef = {"name":"coin","score":10,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(570, 260, 'platform');
+  item.collectDef = {"name":"coin","score":10,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(220, 180, 'platform');
+  item.collectDef = {"name":"coin","score":10,"effect":"none"};
+}
+
+this.physics.add.overlap(this.player, this.collectibles, (player, item) => {
+  const def = item.collectDef;
+  if (!def) return;
+
+  item.destroy();
+  this.score += def.score;
+  if (this.collectSound) this.collectSound.play();
+
+  if (def.effect === 'extraLife') {
+    this.lives = Math.min(this.lives + 1, this.maxLives);
+  }
+  else if (def.effect === 'speedBoost') {
+    this.player.speedMultiplier = 1.5;
+    this.time.delayedCall(5000, () => { this.player.speedMultiplier = 1; });
+  }
+  else if (def.effect === 'invincible') {
+    this.player.invincible = true;
+    this.player.setAlpha(0.5);
+    this.time.delayedCall(5000, () => { this.player.invincible = false; this.player.setAlpha(1); });
+  }
+
+  // Check collectAll win condition
+  if (this.winCondition === "collectAll" && this.collectibles.countActive() === 0) {
+    this.handleWin();
+  }
+});
+
+    this.exitZone = this.add.zone(250, 180, 40, 40);
+    this.physics.add.existing(this.exitZone);
+    this.exitZone.body.setAllowGravity(false);
+    this.physics.add.overlap(this.player, this.exitZone, () => {
+      if (this.winCondition === "reachExit") this.handleWin();
+    });
+
+    this.scene.launch('HudScene');
+  }
+
+  update(time, delta) {
+    if (this.isGameOver) return;
+
+const cursors = this.cursors;
+
+const speed = 200;
+this.player.setVelocityX(0);
+
+if (cursors.left.isDown) {
+  this.player.setVelocityX(-speed);
+  this.player.setFlipX(true);
+}
+else if (cursors.right.isDown) {
+  this.player.setVelocityX(speed);
+  this.player.setFlipX(false);
+}
+else {
+  this.player.anims.stop();
+}
+
+if ((cursors.up.isDown) && this.player.body.onFloor()) {
+  this.player.setVelocityY(-420);
+  if (this.jumpSound) this.jumpSound.play();
+}
+
+if (this.enemies) {
+  this.enemies.getChildren().forEach((enemy) => {
+    const def = enemy.enemyDef;
+    if (!def || !enemy.active) return;
+
+    if (def.movement.kind === 'patrol') {
+      const dist = Math.abs(enemy.x - enemy.patrolOriginX);
+      if (dist >= enemy.patrolDistance) {
+        enemy.setVelocityX(-enemy.body.velocity.x);
+        enemy.setFlipX(enemy.body.velocity.x < 0);
+      }
+    }
+  }
+  );
+}
+
+    this.game.events.emit('updateScore', this.score);
+    this.game.events.emit('updateLives', this.lives);
+  }
+
+  handlePlayerDamage(amount) {
+    if (this.player.invincible) return;
+    this.lives -= amount;
+    if (this.hurtSound) this.hurtSound.play();
+
+    // Brief invincibility
+    this.player.invincible = true;
+    this.player.setAlpha(0.5);
+    this.time.delayedCall(1000, () => {
+      if (this.player) { this.player.invincible = false; this.player.setAlpha(1); }
+    });
+
+    if (this.lives <= 0) {
+      this.handleGameOver();
+    }
+  }
+
+  handleWin() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    if (this.bgm) this.bgm.stop();
+    this.registry.set("score", this.score);
+    this.registry.set("lives", this.lives);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'YOU WIN!', { fontSize: '48px', color: '#00ff00' }).setOrigin(0.5);
+    this.physics.pause();
+  }
+
+  handleGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    if (this.bgm) this.bgm.stop();
+    this.physics.pause();
+    this.player.setTint(0xff0000);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'GAME OVER', { fontSize: '48px', color: '#ff0000' }).setOrigin(0.5);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 60, 'Click to restart', { fontSize: '20px', color: '#ffffff' }).setOrigin(0.5);
+    this.input.on('pointerdown', () => {
+      this.registry.set("score", 0);
+      this.registry.set("lives", 3);
+      this.scene.start('Level_Level_1');
+    });
+  }
+}
+
+class HudScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'HudScene', active: false });
+  }
+
+  create() {
+    this.scoreText = null;
+    this.livesText = null;
+    this.timerText = null;
+
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', color: '#FFFFFF' });
+    this.livesText = this.add.text(700, 16, 'Lives: 3', { fontSize: '20px', color: '#FFFFFF' });
+
+    // Listen for HUD update events
+    this.scene.get('BootScene'); // reference
+    this.game.events.on('updateScore', (score) => {
+      if (this.scoreText) this.scoreText.setText('Score: ' + score);
+    });
+    this.game.events.on('updateLives', (lives) => {
+      if (this.livesText) this.livesText.setText('Lives: ' + lives);
+    });
+    this.game.events.on('updateTimer', (time) => {
+      if (this.timerText) this.timerText.setText('Time: ' + Math.ceil(time));
+    });
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 500 },
+      debug: false,
+    },
+  },
+  scene: [BootScene, Level_Level_1, HudScene],
+};
+
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

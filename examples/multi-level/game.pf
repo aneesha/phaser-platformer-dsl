@@ -1,0 +1,144 @@
+// Multi-Level Adventure — 3 levels with varied enemies, HUD, and level transitions
+game "Multi-Level Adventure" {
+  config { width: 800, height: 600, gravity: 500, background: #1a1a2e }
+
+  assets {
+    image plat "assets/platform.png"
+  }
+
+  player {
+    sprite: plat
+    speed: 200
+    jumpForce: 400
+    lives: 3
+    controls: arrows
+  }
+
+  enemy walker {
+    sprite: plat
+    movement: patrol { speed: 50, distance: 120 }
+    damage: 1
+    stompable: true
+  }
+
+  enemy ghost {
+    sprite: plat
+    movement: chase { speed: 70, range: 250 }
+    damage: 1
+    stompable: false
+  }
+
+  enemy bat {
+    sprite: plat
+    movement: fly { speed: 35, amplitude: 50, frequency: 2 }
+    damage: 1
+    stompable: true
+  }
+
+  collectible coin {
+    sprite: plat
+    score: 10
+  }
+
+  collectible gem {
+    sprite: plat
+    score: 50
+  }
+
+  collectible heart {
+    sprite: plat
+    score: 0
+    effect: extraLife
+  }
+
+  // ─── Level 1: The Grasslands ─────────────────────
+
+  level "Grasslands" {
+    spawn: { x: 50, y: 400 }
+    platforms: [
+      plat at (0, 580, 800, 20),
+      plat at (200, 480, 100, 20),
+      plat at (400, 400, 120, 20),
+      plat at (600, 320, 100, 20)
+    ]
+    enemies: [walker at (300, 450), walker at (500, 370)]
+    coins: [
+      coin at (220, 440),
+      coin at (280, 440),
+      coin at (420, 360),
+      coin at (480, 360),
+      coin at (620, 280)
+    ]
+    exit: { x: 750, y: 280 }
+  }
+
+  // ─── Level 2: The Cavern ─────────────────────────
+
+  level "Cavern" {
+    spawn: { x: 50, y: 400 }
+    platforms: [
+      plat at (0, 580, 800, 20),
+      plat at (0, 0, 20, 600),
+      plat at (780, 0, 20, 600),
+      plat at (100, 480, 120, 20),
+      plat at (300, 400, 150, 20),
+      plat at (500, 320, 120, 20),
+      plat at (200, 240, 100, 20),
+      plat at (400, 160, 120, 20),
+      plat at (600, 100, 100, 20)
+    ]
+    enemies: [
+      ghost at (350, 370),
+      walker at (550, 290),
+      bat at (300, 200)
+    ]
+    coins: [
+      coin at (120, 440),
+      coin at (320, 360),
+      coin at (520, 280),
+      gem at (220, 200),
+      coin at (420, 120),
+      heart at (620, 60)
+    ]
+    exit: { x: 650, y: 60 }
+  }
+
+  // ─── Level 3: The Sky Fortress ───────────────────
+
+  level "Sky Fortress" {
+    spawn: { x: 50, y: 500 }
+    platforms: [
+      plat at (0, 580, 200, 20),
+      plat at (250, 500, 100, 20),
+      plat at (400, 420, 100, 20),
+      plat at (550, 340, 100, 20),
+      plat at (350, 260, 120, 20),
+      plat at (150, 200, 100, 20),
+      plat at (350, 140, 80, 20),
+      plat at (550, 80, 150, 20)
+    ]
+    enemies: [
+      bat at (300, 380),
+      bat at (500, 250),
+      ghost at (400, 220),
+      walker at (580, 50)
+    ]
+    coins: [
+      coin at (270, 460),
+      coin at (420, 380),
+      coin at (570, 300),
+      gem at (370, 220),
+      coin at (170, 160),
+      gem at (570, 40),
+      heart at (370, 100)
+    ]
+    exit: { x: 650, y: 40 }
+  }
+
+  hud {
+    score { position: top-left, fontSize: 22, color: #FFD700 }
+    lives { position: top-right, max: 3 }
+  }
+
+  rules { win: reachExit, lose: noLives, nextLevel: "Cavern" }
+}

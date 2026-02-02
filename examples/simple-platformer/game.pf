@@ -1,0 +1,54 @@
+// Simple Platformer — single level, basic enemies and coins
+game "Simple Platformer" {
+  config { width: 800, height: 600, gravity: 500, background: #87CEEB }
+
+  assets {
+    image platform "assets/platform.png"
+  }
+
+  player {
+    sprite: platform
+    speed: 200
+    jumpForce: 420
+    lives: 3
+    controls: arrows
+  }
+
+  enemy goomba {
+    sprite: platform
+    movement: patrol { speed: 50, distance: 120 }
+    damage: 1
+    stompable: true
+  }
+
+  collectible coin {
+    sprite: platform
+    score: 10
+  }
+
+  level "Level 1" {
+    spawn: { x: 50, y: 400 }
+    platforms: [
+      platform at (0, 580, 800, 20),
+      platform at (150, 460, 120, 20),
+      platform at (350, 380, 120, 20),
+      platform at (550, 300, 120, 20),
+      platform at (200, 220, 120, 20)
+    ]
+    enemies: [goomba at (300, 350), goomba at (600, 270)]
+    coins: [
+      coin at (170, 420),
+      coin at (370, 340),
+      coin at (570, 260),
+      coin at (220, 180)
+    ]
+    exit: { x: 250, y: 180 }
+  }
+
+  hud {
+    score { position: top-left, fontSize: 20, color: #FFFFFF }
+    lives { position: top-right, max: 3 }
+  }
+
+  rules { win: reachExit, lose: noLives }
+}

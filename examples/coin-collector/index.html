@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Collector</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+<script>
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'BootScene' });
+  }
+
+  preload() {
+    this.load.image('plat', 'assets/platform.png');
+  }
+
+  create() {
+
+    this.scene.start('Level_Dungeon');
+  }
+}
+
+class Level_Dungeon extends Phaser.Scene {
+  constructor() {
+    super({ key: 'Level_Dungeon' });
+  }
+
+  create() {
+    this.score = this.registry.get("score") || 0;
+    this.lives = this.registry.get("lives") || 5;
+    this.maxLives = 5;
+    this.winCondition = "collectAll";
+    this.isGameOver = false;
+
+    this.cameras.main.setBackgroundColor('#2D1B69');
+
+this.cursors = this.input.keyboard.createCursorKeys();
+this.wasd = {
+  up: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+  down: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+  left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+  right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+};
+
+this.player = this.physics.add.sprite(50, 400, 'plat');
+this.player.setCollideWorldBounds(true);
+this.player.setBounce(0.1);
+
+    this.platforms = this.physics.add.staticGroup();
+    this.platforms.create(400, 590, 'plat').setDisplaySize(800, 20).refreshBody();
+    this.platforms.create(10, 300, 'plat').setDisplaySize(20, 600).refreshBody();
+    this.platforms.create(790, 300, 'plat').setDisplaySize(20, 600).refreshBody();
+    this.platforms.create(175, 470, 'plat').setDisplaySize(150, 20).refreshBody();
+    this.platforms.create(400, 410, 'plat').setDisplaySize(100, 20).refreshBody();
+    this.platforms.create(625, 350, 'plat').setDisplaySize(150, 20).refreshBody();
+    this.platforms.create(260, 290, 'plat').setDisplaySize(120, 20).refreshBody();
+    this.platforms.create(500, 230, 'plat').setDisplaySize(100, 20).refreshBody();
+    this.platforms.create(710, 170, 'plat').setDisplaySize(120, 20).refreshBody();
+    this.physics.add.collider(this.player, this.platforms);
+
+this.enemies = this.physics.add.group({ allowGravity: true });
+
+{
+  const enemy = this.enemies.create(150, 430, 'plat');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":40,"distance":100},"damage":1,"stompable":true};
+  enemy.setVelocityX(40);
+  enemy.patrolOriginX = 150;
+  enemy.patrolDistance = 100;
+  enemy.patrolSpeed = 40;
+}
+{
+  const enemy = this.enemies.create(400, 370, 'plat');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"ghost","movement":{"kind":"chase","speed":60,"range":200},"damage":1,"stompable":false};
+  enemy.chaseSpeed = 60;
+  enemy.chaseRange = 200;
+}
+{
+  const enemy = this.enemies.create(600, 250, 'plat');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"bat","movement":{"kind":"fly","speed":30,"amplitude":40,"frequency":2},"damage":1,"stompable":true};
+  enemy.body.allowGravity = false;
+  enemy.flyOriginY = 250;
+  enemy.flySpeed = 30;
+  enemy.flyAmplitude = 40;
+  enemy.flyFrequency = 2;
+  enemy.setVelocityX(30);
+}
+{
+  const enemy = this.enemies.create(250, 250, 'plat');
+  enemy.setBounce(0);
+  enemy.setCollideWorldBounds(true);
+  enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":40,"distance":100},"damage":1,"stompable":true};
+  enemy.setVelocityX(40);
+  enemy.patrolOriginX = 250;
+  enemy.patrolDistance = 100;
+  enemy.patrolSpeed = 40;
+}
+    this.physics.add.collider(this.enemies, this.platforms || []);
+
+this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
+  const def = enemy.enemyDef;
+  if (!def) return;
+
+  // Stomp check: player falling and above enemy
+  if (def.stompable && player.body.velocity.y > 0 && player.y < enemy.y - 10) {
+    enemy.destroy();
+    player.setVelocityY(-200); // bounce
+    this.score += 50;
+  } else {
+    this.handlePlayerDamage(def.damage);
+  }
+});
+
+this.collectibles = this.physics.add.group({ allowGravity: false });
+
+{
+  const item = this.collectibles.create(120, 420, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(200, 420, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(370, 360, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(570, 300, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(650, 300, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(220, 240, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(470, 180, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(670, 120, 'plat');
+  item.collectDef = {"name":"coin","score":25,"effect":"none"};
+}
+{
+  const item = this.collectibles.create(400, 550, 'plat');
+  item.collectDef = {"name":"heart","score":0,"effect":"extraLife"};
+}
+
+this.physics.add.overlap(this.player, this.collectibles, (player, item) => {
+  const def = item.collectDef;
+  if (!def) return;
+
+  item.destroy();
+  this.score += def.score;
+  if (this.collectSound) this.collectSound.play();
+
+  if (def.effect === 'extraLife') {
+    this.lives = Math.min(this.lives + 1, this.maxLives);
+  }
+  else if (def.effect === 'speedBoost') {
+    this.player.speedMultiplier = 1.5;
+    this.time.delayedCall(5000, () => { this.player.speedMultiplier = 1; });
+  }
+  else if (def.effect === 'invincible') {
+    this.player.invincible = true;
+    this.player.setAlpha(0.5);
+    this.time.delayedCall(5000, () => { this.player.invincible = false; this.player.setAlpha(1); });
+  }
+
+  // Check collectAll win condition
+  if (this.winCondition === "collectAll" && this.collectibles.countActive() === 0) {
+    this.handleWin();
+  }
+});
+
+    this.scene.launch('HudScene');
+  }
+
+  update(time, delta) {
+    if (this.isGameOver) return;
+
+const cursors = this.cursors;
+const wasd = this.wasd;
+
+const speed = 220;
+this.player.setVelocityX(0);
+
+if (cursors.left.isDown || wasd.left.isDown) {
+  this.player.setVelocityX(-speed);
+  this.player.setFlipX(true);
+}
+else if (cursors.right.isDown || wasd.right.isDown) {
+  this.player.setVelocityX(speed);
+  this.player.setFlipX(false);
+}
+else {
+  this.player.anims.stop();
+}
+
+if ((cursors.up.isDown || wasd.up.isDown) && this.player.body.onFloor()) {
+  this.player.setVelocityY(-400);
+  if (this.jumpSound) this.jumpSound.play();
+}
+
+if (this.enemies) {
+  this.enemies.getChildren().forEach((enemy) => {
+    const def = enemy.enemyDef;
+    if (!def || !enemy.active) return;
+
+    if (def.movement.kind === 'patrol') {
+      const dist = Math.abs(enemy.x - enemy.patrolOriginX);
+      if (dist >= enemy.patrolDistance) {
+        enemy.setVelocityX(-enemy.body.velocity.x);
+        enemy.setFlipX(enemy.body.velocity.x < 0);
+      }
+    }
+    if (def.movement.kind === 'chase') {
+      const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+      if (dist < enemy.chaseRange) {
+        const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, this.player.x, this.player.y);
+        enemy.setVelocityX(Math.cos(angle) * enemy.chaseSpeed);
+        enemy.setFlipX(enemy.body.velocity.x < 0);
+      }
+      else {
+        enemy.setVelocityX(0);
+      }
+    }
+    if (def.movement.kind === 'fly') {
+      const time = this.time.now / 1000;
+      enemy.y = enemy.flyOriginY + Math.sin(time * enemy.flyFrequency) * enemy.flyAmplitude;
+      // Reverse direction at world bounds
+      if (enemy.x <= 10 || enemy.x >= this.physics.world.bounds.width - 10) {
+        enemy.setVelocityX(-enemy.body.velocity.x);
+      }
+    }
+  }
+  );
+}
+
+    this.game.events.emit('updateScore', this.score);
+    this.game.events.emit('updateLives', this.lives);
+  }
+
+  handlePlayerDamage(amount) {
+    if (this.player.invincible) return;
+    this.lives -= amount;
+    if (this.hurtSound) this.hurtSound.play();
+
+    // Brief invincibility
+    this.player.invincible = true;
+    this.player.setAlpha(0.5);
+    this.time.delayedCall(1000, () => {
+      if (this.player) { this.player.invincible = false; this.player.setAlpha(1); }
+    });
+
+    if (this.lives <= 0) {
+      this.handleGameOver();
+    }
+  }
+
+  handleWin() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    if (this.bgm) this.bgm.stop();
+    this.registry.set("score", this.score);
+    this.registry.set("lives", this.lives);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'YOU WIN!', { fontSize: '48px', color: '#00ff00' }).setOrigin(0.5);
+    this.physics.pause();
+  }
+
+  handleGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+    if (this.bgm) this.bgm.stop();
+    this.physics.pause();
+    this.player.setTint(0xff0000);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'GAME OVER', { fontSize: '48px', color: '#ff0000' }).setOrigin(0.5);
+    this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 60, 'Click to restart', { fontSize: '20px', color: '#ffffff' }).setOrigin(0.5);
+    this.input.on('pointerdown', () => {
+      this.registry.set("score", 0);
+      this.registry.set("lives", 5);
+      this.scene.start('Level_Dungeon');
+    });
+  }
+}
+
+class HudScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'HudScene', active: false });
+  }
+
+  create() {
+    this.scoreText = null;
+    this.livesText = null;
+    this.timerText = null;
+
+    this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '22px', color: '#FFD700' });
+    this.livesText = this.add.text(700, 16, 'Lives: 5', { fontSize: '20px', color: '#FFFFFF' });
+
+    // Listen for HUD update events
+    this.scene.get('BootScene'); // reference
+    this.game.events.on('updateScore', (score) => {
+      if (this.scoreText) this.scoreText.setText('Score: ' + score);
+    });
+    this.game.events.on('updateLives', (lives) => {
+      if (this.livesText) this.livesText.setText('Lives: ' + lives);
+    });
+    this.game.events.on('updateTimer', (time) => {
+      if (this.timerText) this.timerText.setText('Time: ' + Math.ceil(time));
+    });
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 500 },
+      debug: false,
+    },
+  },
+  scene: [BootScene, Level_Dungeon, HudScene],
+};
+
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

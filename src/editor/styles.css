@@ -1,0 +1,150 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+}
+
+header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #89b4fa;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#compileBtn {
+  background: #89b4fa;
+  color: #1e1e2e;
+}
+
+#compileBtn:hover {
+  background: #74c7ec;
+}
+
+#exportBtn {
+  background: #313244;
+  color: #cdd6f4;
+}
+
+#exportBtn:hover {
+  background: #45475a;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+#editorPane {
+  flex: 1;
+  overflow: hidden;
+  border-right: 1px solid #313244;
+}
+
+#editor {
+  height: 100%;
+}
+
+#editor .cm-editor {
+  height: 100%;
+}
+
+#editor .cm-scroller {
+  overflow: auto;
+}
+
+#previewPane {
+  flex: 1;
+  overflow: hidden;
+  background: #000;
+}
+
+#preview {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+footer#errorBar {
+  padding: 8px 16px;
+  background: #181825;
+  border-top: 1px solid #313244;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  min-height: 32px;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+footer#errorBar.error {
+  color: #f38ba8;
+  background: #1e1e2e;
+}
+
+footer#errorBar.success {
+  color: #a6e3a1;
+}
+
+/* CodeMirror theme overrides for dark mode */
+.cm-editor {
+  background: #1e1e2e !important;
+}
+
+.cm-gutters {
+  background: #181825 !important;
+  border-right: 1px solid #313244 !important;
+  color: #6c7086 !important;
+}
+
+.cm-activeLineGutter {
+  background: #313244 !important;
+}
+
+.cm-activeLine {
+  background: rgba(49, 50, 68, 0.5) !important;
+}
+
+.cm-selectionBackground {
+  background: rgba(137, 180, 250, 0.2) !important;
+}
+
+.cm-cursor {
+  border-color: #f5e0dc !important;
+}
