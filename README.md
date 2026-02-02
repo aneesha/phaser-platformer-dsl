@@ -18,11 +18,14 @@ game "My Platformer" {
   config { width: 800, height: 600, gravity: 500, background: #87CEEB }
 
   assets {
+    image playerSprite "assets/player.png"
     image platform "assets/platform.png"
+    image coinSprite "assets/coin.png"
+    image enemySprite "assets/enemy.png"
   }
 
   player {
-    sprite: platform
+    sprite: playerSprite
     speed: 200
     jumpForce: 400
     lives: 3
@@ -30,14 +33,14 @@ game "My Platformer" {
   }
 
   enemy goomba {
-    sprite: platform
+    sprite: enemySprite
     movement: patrol { speed: 60, distance: 150 }
     damage: 1
     stompable: true
   }
 
   collectible coin {
-    sprite: platform
+    sprite: coinSprite
     score: 10
   }
 
@@ -282,7 +285,29 @@ Generate the HTML files:
 npm run generate-examples
 ```
 
-Then open any `examples/*/index.html` in a browser.
+### Running the examples
+
+The generated HTML files load assets via relative paths, so they must be served over HTTP (opening `file://` URLs directly will fail due to browser security restrictions).
+
+Use any local HTTP server. For example:
+
+```bash
+# Serve a single example
+npx serve examples/simple-platformer
+# Then open http://localhost:3000
+
+# Or serve all examples at once
+npx serve examples
+# Then open http://localhost:3000/simple-platformer
+```
+
+Or with Python:
+
+```bash
+cd examples/simple-platformer
+python3 -m http.server 8080
+# Then open http://localhost:8080
+```
 
 ## Development
 
