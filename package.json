@@ -1,0 +1,58 @@
+{
+  "name": "phaser-platformer-dsl",
+  "version": "0.1.0",
+  "description": "A simple DSL to generate Phaser.js platformer games",
+  "type": "module",
+  "main": "dist/phaser-platformer-dsl.js",
+  "module": "dist/phaser-platformer-dsl.esm.js",
+  "types": "dist/phaser-platformer-dsl.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/phaser-platformer-dsl.d.ts",
+      "import": "./dist/phaser-platformer-dsl.esm.js",
+      "require": "./dist/phaser-platformer-dsl.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsx build.ts",
+    "build:editor": "vite build --config vite.editor.config.ts",
+    "build:playground": "vite build --config vite.playground.config.ts",
+    "dev:editor": "vite --config vite.editor.config.ts",
+    "dev:playground": "vite --config vite.playground.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate-examples": "tsx scripts/generate-examples.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "phaser",
+    "platformer",
+    "dsl",
+    "game",
+    "generator"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "phaser": "^3.80.0"
+  },
+  "dependencies": {
+    "ohm-js": "^17.1.0"
+  },
+  "devDependencies": {
+    "@codemirror/lang-javascript": "^6.2.2",
+    "@codemirror/language": "^6.10.6",
+    "@codemirror/state": "^6.5.0",
+    "@codemirror/view": "^6.35.0",
+    "codemirror": "^6.0.1",
+    "esbuild": "^0.24.0",
+    "phaser": "^3.80.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  }
+}
