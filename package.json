@@ -26,6 +26,7 @@
     "dev:playground": "vite --config vite.playground.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "generate-assets": "tsx scripts/generate-assets.ts",
     "generate-examples": "tsx scripts/generate-examples.ts",
     "typecheck": "tsc --noEmit"
   },

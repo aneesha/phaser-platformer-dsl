@@ -18,7 +18,11 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('playerSprite', 'assets/player.png');
     this.load.image('plat', 'assets/platform.png');
+    this.load.image('coinSprite', 'assets/coin.png');
+    this.load.image('enemySprite', 'assets/enemy.png');
+    this.load.image('heartSprite', 'assets/heart.png');
   }
 
   create() {
@@ -49,7 +53,7 @@ this.wasd = {
   right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
 };
 
-this.player = this.physics.add.sprite(50, 400, 'plat');
+this.player = this.physics.add.sprite(50, 400, 'playerSprite');
 this.player.setCollideWorldBounds(true);
 this.player.setBounce(0.1);
 
@@ -68,7 +72,7 @@ this.player.setBounce(0.1);
 this.enemies = this.physics.add.group({ allowGravity: true });
 
 {
-  const enemy = this.enemies.create(150, 430, 'plat');
+  const enemy = this.enemies.create(150, 430, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":40,"distance":100},"damage":1,"stompable":true};
@@ -78,7 +82,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.patrolSpeed = 40;
 }
 {
-  const enemy = this.enemies.create(400, 370, 'plat');
+  const enemy = this.enemies.create(400, 370, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"ghost","movement":{"kind":"chase","speed":60,"range":200},"damage":1,"stompable":false};
@@ -86,7 +90,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.chaseRange = 200;
 }
 {
-  const enemy = this.enemies.create(600, 250, 'plat');
+  const enemy = this.enemies.create(600, 250, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"bat","movement":{"kind":"fly","speed":30,"amplitude":40,"frequency":2},"damage":1,"stompable":true};
@@ -98,7 +102,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.setVelocityX(30);
 }
 {
-  const enemy = this.enemies.create(250, 250, 'plat');
+  const enemy = this.enemies.create(250, 250, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":40,"distance":100},"damage":1,"stompable":true};
@@ -126,39 +130,39 @@ this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
 this.collectibles = this.physics.add.group({ allowGravity: false });
 
 {
-  const item = this.collectibles.create(120, 420, 'plat');
+  const item = this.collectibles.create(120, 420, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(200, 420, 'plat');
+  const item = this.collectibles.create(200, 420, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(370, 360, 'plat');
+  const item = this.collectibles.create(370, 360, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(570, 300, 'plat');
+  const item = this.collectibles.create(570, 300, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(650, 300, 'plat');
+  const item = this.collectibles.create(650, 300, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(220, 240, 'plat');
+  const item = this.collectibles.create(220, 240, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(470, 180, 'plat');
+  const item = this.collectibles.create(470, 180, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(670, 120, 'plat');
+  const item = this.collectibles.create(670, 120, 'coinSprite');
   item.collectDef = {"name":"coin","score":25,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(400, 550, 'plat');
+  const item = this.collectibles.create(400, 550, 'heartSprite');
   item.collectDef = {"name":"heart","score":0,"effect":"extraLife"};
 }
 

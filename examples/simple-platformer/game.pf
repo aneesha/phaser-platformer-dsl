@@ -3,11 +3,14 @@ game "Simple Platformer" {
   config { width: 800, height: 600, gravity: 500, background: #87CEEB }
 
   assets {
+    image playerSprite "assets/player.png"
     image platform "assets/platform.png"
+    image coinSprite "assets/coin.png"
+    image enemySprite "assets/enemy.png"
   }
 
   player {
-    sprite: platform
+    sprite: playerSprite
     speed: 200
     jumpForce: 420
     lives: 3
@@ -15,14 +18,14 @@ game "Simple Platformer" {
   }
 
   enemy goomba {
-    sprite: platform
+    sprite: enemySprite
     movement: patrol { speed: 50, distance: 120 }
     damage: 1
     stompable: true
   }
 
   collectible coin {
-    sprite: platform
+    sprite: coinSprite
     score: 10
   }
 

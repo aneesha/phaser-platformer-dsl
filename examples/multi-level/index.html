@@ -18,7 +18,12 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('playerSprite', 'assets/player.png');
     this.load.image('plat', 'assets/platform.png');
+    this.load.image('coinSprite', 'assets/coin.png');
+    this.load.image('enemySprite', 'assets/enemy.png');
+    this.load.image('gemSprite', 'assets/gem.png');
+    this.load.image('heartSprite', 'assets/heart.png');
   }
 
   create() {
@@ -43,7 +48,7 @@ class Level_Grasslands extends Phaser.Scene {
 
 this.cursors = this.input.keyboard.createCursorKeys();
 
-this.player = this.physics.add.sprite(50, 400, 'plat');
+this.player = this.physics.add.sprite(50, 400, 'playerSprite');
 this.player.setCollideWorldBounds(true);
 this.player.setBounce(0.1);
 
@@ -57,7 +62,7 @@ this.player.setBounce(0.1);
 this.enemies = this.physics.add.group({ allowGravity: true });
 
 {
-  const enemy = this.enemies.create(300, 450, 'plat');
+  const enemy = this.enemies.create(300, 450, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -67,7 +72,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.patrolSpeed = 50;
 }
 {
-  const enemy = this.enemies.create(500, 370, 'plat');
+  const enemy = this.enemies.create(500, 370, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -95,23 +100,23 @@ this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
 this.collectibles = this.physics.add.group({ allowGravity: false });
 
 {
-  const item = this.collectibles.create(220, 440, 'plat');
+  const item = this.collectibles.create(220, 440, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(280, 440, 'plat');
+  const item = this.collectibles.create(280, 440, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(420, 360, 'plat');
+  const item = this.collectibles.create(420, 360, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(480, 360, 'plat');
+  const item = this.collectibles.create(480, 360, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(620, 280, 'plat');
+  const item = this.collectibles.create(620, 280, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 
@@ -274,7 +279,7 @@ class Level_Cavern extends Phaser.Scene {
 
 this.cursors = this.input.keyboard.createCursorKeys();
 
-this.player = this.physics.add.sprite(50, 400, 'plat');
+this.player = this.physics.add.sprite(50, 400, 'playerSprite');
 this.player.setCollideWorldBounds(true);
 this.player.setBounce(0.1);
 
@@ -293,7 +298,7 @@ this.player.setBounce(0.1);
 this.enemies = this.physics.add.group({ allowGravity: true });
 
 {
-  const enemy = this.enemies.create(350, 370, 'plat');
+  const enemy = this.enemies.create(350, 370, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"ghost","movement":{"kind":"chase","speed":70,"range":250},"damage":1,"stompable":false};
@@ -301,7 +306,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.chaseRange = 250;
 }
 {
-  const enemy = this.enemies.create(550, 290, 'plat');
+  const enemy = this.enemies.create(550, 290, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -311,7 +316,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.patrolSpeed = 50;
 }
 {
-  const enemy = this.enemies.create(300, 200, 'plat');
+  const enemy = this.enemies.create(300, 200, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"bat","movement":{"kind":"fly","speed":35,"amplitude":50,"frequency":2},"damage":1,"stompable":true};
@@ -341,27 +346,27 @@ this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
 this.collectibles = this.physics.add.group({ allowGravity: false });
 
 {
-  const item = this.collectibles.create(120, 440, 'plat');
+  const item = this.collectibles.create(120, 440, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(320, 360, 'plat');
+  const item = this.collectibles.create(320, 360, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(520, 280, 'plat');
+  const item = this.collectibles.create(520, 280, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(220, 200, 'plat');
+  const item = this.collectibles.create(220, 200, 'gemSprite');
   item.collectDef = {"name":"gem","score":50,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(420, 120, 'plat');
+  const item = this.collectibles.create(420, 120, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(620, 60, 'plat');
+  const item = this.collectibles.create(620, 60, 'heartSprite');
   item.collectDef = {"name":"heart","score":0,"effect":"extraLife"};
 }
 
@@ -524,7 +529,7 @@ class Level_Sky_Fortress extends Phaser.Scene {
 
 this.cursors = this.input.keyboard.createCursorKeys();
 
-this.player = this.physics.add.sprite(50, 500, 'plat');
+this.player = this.physics.add.sprite(50, 500, 'playerSprite');
 this.player.setCollideWorldBounds(true);
 this.player.setBounce(0.1);
 
@@ -542,7 +547,7 @@ this.player.setBounce(0.1);
 this.enemies = this.physics.add.group({ allowGravity: true });
 
 {
-  const enemy = this.enemies.create(300, 380, 'plat');
+  const enemy = this.enemies.create(300, 380, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"bat","movement":{"kind":"fly","speed":35,"amplitude":50,"frequency":2},"damage":1,"stompable":true};
@@ -554,7 +559,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.setVelocityX(35);
 }
 {
-  const enemy = this.enemies.create(500, 250, 'plat');
+  const enemy = this.enemies.create(500, 250, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"bat","movement":{"kind":"fly","speed":35,"amplitude":50,"frequency":2},"damage":1,"stompable":true};
@@ -566,7 +571,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.setVelocityX(35);
 }
 {
-  const enemy = this.enemies.create(400, 220, 'plat');
+  const enemy = this.enemies.create(400, 220, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"ghost","movement":{"kind":"chase","speed":70,"range":250},"damage":1,"stompable":false};
@@ -574,7 +579,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.chaseRange = 250;
 }
 {
-  const enemy = this.enemies.create(580, 50, 'plat');
+  const enemy = this.enemies.create(580, 50, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"walker","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -602,31 +607,31 @@ this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
 this.collectibles = this.physics.add.group({ allowGravity: false });
 
 {
-  const item = this.collectibles.create(270, 460, 'plat');
+  const item = this.collectibles.create(270, 460, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(420, 380, 'plat');
+  const item = this.collectibles.create(420, 380, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(570, 300, 'plat');
+  const item = this.collectibles.create(570, 300, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(370, 220, 'plat');
+  const item = this.collectibles.create(370, 220, 'gemSprite');
   item.collectDef = {"name":"gem","score":50,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(170, 160, 'plat');
+  const item = this.collectibles.create(170, 160, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(570, 40, 'plat');
+  const item = this.collectibles.create(570, 40, 'gemSprite');
   item.collectDef = {"name":"gem","score":50,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(370, 100, 'plat');
+  const item = this.collectibles.create(370, 100, 'heartSprite');
   item.collectDef = {"name":"heart","score":0,"effect":"extraLife"};
 }
 

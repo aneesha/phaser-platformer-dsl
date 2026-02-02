@@ -18,7 +18,10 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('playerSprite', 'assets/player.png');
     this.load.image('platform', 'assets/platform.png');
+    this.load.image('coinSprite', 'assets/coin.png');
+    this.load.image('enemySprite', 'assets/enemy.png');
   }
 
   create() {
@@ -43,7 +46,7 @@ class Level_Level_1 extends Phaser.Scene {
 
 this.cursors = this.input.keyboard.createCursorKeys();
 
-this.player = this.physics.add.sprite(50, 400, 'platform');
+this.player = this.physics.add.sprite(50, 400, 'playerSprite');
 this.player.setCollideWorldBounds(true);
 this.player.setBounce(0.1);
 
@@ -58,7 +61,7 @@ this.player.setBounce(0.1);
 this.enemies = this.physics.add.group({ allowGravity: true });
 
 {
-  const enemy = this.enemies.create(300, 350, 'platform');
+  const enemy = this.enemies.create(300, 350, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"goomba","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -68,7 +71,7 @@ this.enemies = this.physics.add.group({ allowGravity: true });
   enemy.patrolSpeed = 50;
 }
 {
-  const enemy = this.enemies.create(600, 270, 'platform');
+  const enemy = this.enemies.create(600, 270, 'enemySprite');
   enemy.setBounce(0);
   enemy.setCollideWorldBounds(true);
   enemy.enemyDef = {"name":"goomba","movement":{"kind":"patrol","speed":50,"distance":120},"damage":1,"stompable":true};
@@ -96,19 +99,19 @@ this.physics.add.overlap(this.player, this.enemies, (player, enemy) => {
 this.collectibles = this.physics.add.group({ allowGravity: false });
 
 {
-  const item = this.collectibles.create(170, 420, 'platform');
+  const item = this.collectibles.create(170, 420, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(370, 340, 'platform');
+  const item = this.collectibles.create(370, 340, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(570, 260, 'platform');
+  const item = this.collectibles.create(570, 260, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 {
-  const item = this.collectibles.create(220, 180, 'platform');
+  const item = this.collectibles.create(220, 180, 'coinSprite');
   item.collectDef = {"name":"coin","score":10,"effect":"none"};
 }
 

@@ -3,11 +3,15 @@ game "Coin Collector" {
   config { width: 800, height: 600, gravity: 500, background: #2D1B69 }
 
   assets {
+    image playerSprite "assets/player.png"
     image plat "assets/platform.png"
+    image coinSprite "assets/coin.png"
+    image enemySprite "assets/enemy.png"
+    image heartSprite "assets/heart.png"
   }
 
   player {
-    sprite: plat
+    sprite: playerSprite
     speed: 220
     jumpForce: 400
     lives: 5
@@ -15,33 +19,33 @@ game "Coin Collector" {
   }
 
   enemy walker {
-    sprite: plat
+    sprite: enemySprite
     movement: patrol { speed: 40, distance: 100 }
     damage: 1
     stompable: true
   }
 
   enemy ghost {
-    sprite: plat
+    sprite: enemySprite
     movement: chase { speed: 60, range: 200 }
     damage: 1
     stompable: false
   }
 
   enemy bat {
-    sprite: plat
+    sprite: enemySprite
     movement: fly { speed: 30, amplitude: 40, frequency: 2 }
     damage: 1
     stompable: true
   }
 
   collectible coin {
-    sprite: plat
+    sprite: coinSprite
     score: 25
   }
 
   collectible heart {
-    sprite: plat
+    sprite: heartSprite
     score: 0
     effect: extraLife
   }
